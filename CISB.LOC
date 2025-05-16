@@ -1,0 +1,44 @@
+CONST
+   Err_Mess_Line   = 9               (* Line for status report *);
+
+VAR
+   Seq_Num      : INTEGER          (* Current Sequence Number - init by CISB_Term_ENQ *);
+   CheckSum     : INTEGER          (* May hold CRC *);
+
+                   (* Other End's Parameters *)
+
+   His_WS        : BYTE            (* Sender's Window Send     *);
+   His_WR        : BYTE            (* Sender's Window Receive  *);
+   His_BS        : BYTE            (* Sender's Block Size      *);
+   His_CM        : BYTE            (* Sender's Check Method    *);
+
+                   (* Negotiated Parameters *)
+
+   Our_WS        : BYTE            (* Negotiated Window Send    *);
+   Our_WR        : BYTE            (* Negotiated Window Receive *);
+   Our_BS        : BYTE            (* Negotiated Block Size     *);
+   Our_CM        : BYTE            (* Negotiated Check Method   *);
+
+   Quick_B       : BOOLEAN         (* TRUE if Quick B in effect *);
+   Use_CRC       : BOOLEAN         (* TRUE if CRC in effect     *);
+   Buffer_Size   : INTEGER         (* Our_BS * 4                *);
+   SA_Max        : INTEGER         (* 1 if SA not enabled, else Max_SA *);
+   SA_Enabled    : BOOLEAN         (* TRUE if Send-Ahead is permitted  *);
+
+   Comp_Title    : AnyStr          (* Title for status display *);
+   Total_Blocks  : INTEGER         (* Blocks processed so far *);
+   Total_Packets : INTEGER         (* Packets thus far        *);
+   Total_Errors  : INTEGER         (* Errors thus far         *);
+   Total_Bytes   : LONGINT         (* Bytes thus far          *);
+   TFile_Size    : LONGINT         (* Size of file to send    *);
+
+   Halt_Transfer : BOOLEAN         (* PibTerm_KeyPressed to halt transfer *);
+   Receiving_File: BOOLEAN         (* TRUE if receiving file      *);
+
+   Starting_Time : LONGINT         (* Start time of transfer      *);
+   Ending_Time   : LONGINT         (* End time of transfer        *);
+   Total_Time    : LONGINT         (* Total transfer time         *);
+   Reset_Port    : BOOLEAN         (* TRUE if port needs reset    *);
+
+
+
