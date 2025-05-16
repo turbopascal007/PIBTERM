@@ -1,0 +1,52 @@
+(*--------------------------------------------------------------------------*)
+(*                     Script operator definitions                          *)
+(*--------------------------------------------------------------------------*)
+
+CONST
+   MaxOperType              = 49;
+   MaxOperNames             = 44;
+   MaxOperNames1            = 43;
+   MaxPrec                  = 12;
+   MaxExecStack             = 32;
+
+TYPE
+
+   OperType     = ( NoOpSy, AddSy, SubtractSy, MultSy, DivideSy,
+                    EqualISy, LessISy, LessEqualISy, GreaterISy, GreaterEqualISy,
+                    NotEqualISy,
+                    EqualSSy, LessSSy, LessEqualSSy, GreaterSSy, GreaterEqualSSy,
+                    NotEqualSSy,
+                    AndSy, NotSy, OrSy, XorSy,
+                    SubStrSy, IndexSy, LengthSy, ConcatSy, ConnectedSy,
+                    WaitFoundSy, StringSy, NumberSy, AttendedSy,
+                    FileExistsSy, EofSy, IOResultSy, DuplSy, UpperCaseSy,
+                    TrimSy, ParamCountSy, ParamStrSy, ParamLineSy, DialedSy,
+                    LTrimSy, DateSy, TimeSy, DialEntrySy, OrdSy, ChrSy,
+                    ReadCtrlSy, WriteCtrlSy, EnhKeybdSy, KeyStringSy );
+
+(* STRUCTURED *) CONST
+   OperSyms2    : ARRAY[0..MaxOperType] OF OperType
+                = ( NoOpSy, AddSy, SubtractSy, MultSy, DivideSy,
+                    EqualISy, LessISy, LessEqualISy, GreaterISy, GreaterEqualISy,
+                    NotEqualISy,
+                    EqualSSy, LessSSy, LessEqualSSy, GreaterSSy, GreaterEqualSSy,
+                    NotEqualSSy,
+                    AndSy, NotSy, OrSy, XorSy,
+                    SubStrSy, IndexSy, LengthSy, ConcatSy, ConnectedSy,
+                    WaitFoundSy, StringSy, NumberSy, AttendedSy,
+                    FileExistsSy, EofSy, IOResultSy, DuplSy, UpperCaseSy,
+                    TrimSy, ParamCountSy, ParamStrSy, ParamLineSy, DialedSy,
+                    LTrimSy, DateSy, TimeSy, DialEntrySy,
+                    OrdSy, ChrSy,
+                    ReadCtrlSy, WriteCtrlSy, EnhKeybdSy, KeyStringSy );
+
+   Operands     : ARRAY[0..MaxOperandTypes] OF OperandType =
+                  ( Bad_Operand_Type, Operator_Type, Integer_Variable_Type,
+                    Real_Variable_Type, String_Variable_Type,
+                    Char_Variable_Type,
+                    Integer_Constant_Type, Real_Constant_Type,
+                    String_Constant_Type,
+                    Char_Constant_Type,
+                    StackEnd_Type, Left_Paren_Type, Right_Paren_Type,
+                    Comma_Type );
+

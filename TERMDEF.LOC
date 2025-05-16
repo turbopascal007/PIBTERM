@@ -1,0 +1,138 @@
+(*--------------------------------------------------------------------------*)
+(*          Display action definitions for various terminals                *)
+(*--------------------------------------------------------------------------*)
+
+CONST
+   MaxAdm3aChars = 8;
+   MaxAdm5Chars  = 11;
+   MaxVT52Chars  = 30;
+   MaxTV950Chars = 12;
+   MaxTV925Chars = 22;
+   MaxAddsVChars = 12;
+   MaxTI940Chars = 27;
+
+(* STRUCTURED *) CONST
+   ADM3a_Chars   : ARRAY[1..MaxAdm3aChars] OF CHAR =
+                   ( ^K, ^J, ^L, ^H, ^^, ^Z, '=', ^U );
+
+   ADM3a_Actions : ARRAY[1..MaxAdm3aChars] OF Display_Action =
+                   ( CursorUp, Index, CursorRight, CursorLeft,
+                     CursorHome, ClearScrH, CursorPosVT52, Index );
+
+   ADM5_Chars    : ARRAY[1..MaxAdm5Chars] OF CHAR =
+                   ( ^K, ^J, ^L, ^H, ^^, ^Z , '=', 'G', ')', '(', ^U );
+
+   ADM5_Actions  : ARRAY[1..MaxAdm5Chars] OF Display_Action =
+                   ( CursorUp, Index, CursorRight, CursorLeft,
+                     CursorHome, ClearScrH, CursorPosVT52, ReverseVideo,
+                     StartDim,   EndDim, Index );
+
+   VT52_Chars    : ARRAY[1..MaxVT52Chars] OF CHAR =
+                   ( ^I, ^J, ^K, ^L, ^Q,
+                     'A', 'B', 'C', 'D', 'H', 'Y', 'I', 'K', 'J',
+                     'V', ']', '^', '-', 'W', 'X', 'Z', '=', '>',
+                     'L', 'F', 'G', '<', ']', '[', '\' );
+
+   VT52_Actions  : ARRAY[1..MaxVT52Chars] OF Display_Action =
+                   ( VT52HT, VT52LF, VT52LF, VT52LF, SendMahoneyOn,
+                     CursorUp, CursorDown, CursorRight, CursorLeft,
+                     CursorHome, CursorPosVT52, ReverseIndex, ClearEOL,
+                     ClearEOS, PrintLine, PrintPage, StartAutoPrint,
+                     EndAutoPrint, StartPrintControl, EndPrintControl,
+                     IdentifyVT52, StartAltKey, EndAltKey, ClearScrH,
+                     StartGraphicsMode, EndGraphicsMode, EnterVT100,
+                     PrintPage, StartVT52HoldScreen, EndVT52HoldScreen
+                   );
+
+   TV925_Chars   : ARRAY[1..MaxTV925Chars] OF CHAR =
+                   ( ^K, ^V, ^L, ^H, ^^, ^Z , '=', 'G', ')', '(',
+                     'T', 'Y', 'Q', 'W', 'R', 'E', '*', ';', ':',
+                     't', 'y', 'P' );
+
+   TV925_Actions : ARRAY[1..MaxTV925Chars] OF Display_Action =
+                   ( CursorUp, CursorDown, CursorRight, CursorLeft,
+                     CursorHome, ClearScrH, CursorPosVT52, TV950Video,
+                     StartDim,   EndDim, ClearEOL, ClearEOS,
+                     InsertCharA, DeleteChar, DeleteLine, InsertLineA,
+                     ClearScrH, ClearScrH, ClearScrH, ClearEOS, ClearEOL,
+                     PrintPage );
+
+   TV950_Chars   : ARRAY[1..MaxTV950Chars] OF CHAR =
+                   ( ^K, ^J, ^L, ^H, ^^, ^Z , '=', 'G', ')', '(',
+                     'T', 'Y' );
+
+   TV950_Actions : ARRAY[1..MaxTV950Chars] OF Display_Action =
+                   ( CursorUp, CursorDown, CursorRight, CursorLeft,
+                     CursorHome, ClearScrH, CursorPosVT52, TV950Video,
+                     StartDim,   EndDim, ClearEOL, ClearEOS );
+
+   AddsV_Chars   : ARRAY[1..MaxAddsVChars] OF CHAR =
+                   ( ^Z, ^J, ^F, ^U, ^A, ^L , ^P, ^K, 'Y', 'k', 'K', '0' );
+
+   AddsV_Actions : ARRAY[1..MaxAddsVChars] OF Display_Action =
+                   ( CursorUp, CursorDown, CursorRight, CursorLeft,
+                     CursorHome, ClearScrH, CursorPosH, CursorPosV,
+                     CursorPosVT52, ClearEOS, ClearEOL, Swallow );
+
+   TI940_Chars   : ARRAY[1..MaxTI940Chars] OF CHAR =
+                   ( 'A', 'B', 'C', 'D', 'H', 'Y', 'I', 'K', 'J',
+                     'V', ']', '^', '_', 'W', 'X', 'Z', '=', '>',
+                     'L', 'F', 'G', 'P', 'Q', 'm', 'r', 'O', 'N' );
+
+   TI940_Actions : ARRAY[1..MaxTI940Chars] OF Display_Action =
+                   ( CursorUp, CursorDown, CursorRight, CursorLeft,
+                     CursorHome, CursorPosVT52, ReverseIndex, ClearEOL,
+                     ClearEOS, PrintLine, PrintPage, StartAutoPrint,
+                     EndAutoPrint, StartPrintControl, EndPrintControl,
+                     IdentifyVT52, StartAltKey, EndAltKey, ClearScrH,
+                     StartGraphicsMode, EndGraphicsMode, InsertCharA,
+                     DeleteChar, StartInsert, EndInsert, InsertLineA,
+                     DeleteLine
+                   );
+
+                                   (* VT52 definitions *)
+(* STRUCTURED *) CONST
+
+   Number_VT52_Tabs = 17;
+
+   VT52_Tabs:  ARRAY[ 1 .. Number_VT52_Tabs ] OF BYTE
+               = (  9, 17, 25, 33, 41, 49, 57, 65, 73, 74, 75, 76, 77,
+                   78, 79, 80, 81);
+
+                                   (* Long terminal names for messages *)
+
+   Long_Terminal_Names: ARRAY[0..NumberTerminalTypes] OF STRING[12] =
+                        ( 'Dumb',     'VT52',      'ANSI',     'VT100',
+                          'Gossip',   'Host Mode', 'Tek 4010', 'ADM3a',
+                          'ADM5',     'TV925',     'User1',    'User2',
+                          'User3',    'User4',     'User5' );
+
+                                   (* VT100 definitions *)
+(* STRUCTURED *) CONST
+
+   Bold_Colors:   ARRAY[Black..White] OF BYTE
+                  = ( DarkGray, LightBlue,    LightGreen, LightCyan,
+                      LightRed, LightMagenta, Yellow,     White,
+                      DarkGray, LightBlue,    LightGreen, LightCyan,
+                      LightRed, LightMagenta, Yellow,     White );
+
+   Normal_Colors: ARRAY[Black..White] OF BYTE
+                  = ( Black, Blue,    Green, Cyan,
+                      Red,   Magenta, Brown, LightGray,
+                      Black, Blue,    Green, Cyan,
+                      Red,   Magenta, Brown, LightGray );
+
+   Bold_Colors_2: ARRAY[0..7] OF BYTE
+                  = ( DarkGray,  LightRed,     LightGreen, Yellow,
+                      LightBlue, LightMagenta, LightCyan,  White   );
+
+   Normal_Colors_2: ARRAY[0..7] OF BYTE
+                    = ( Black, Red,     Green, Brown,
+                        Blue,  Magenta, Cyan,  LightGray );
+
+   VT100_Graphics_Chars: ARRAY[ 95 .. 126 ] Of BYTE
+                         = (  32,   4, 177,   9,  12,  13,  10, 248, 241,
+                              10,  10, 217, 191, 218, 192, 197, 196, 196,
+                             196, 196,  95, 195, 180, 193, 194, 179, 243,
+                             242, 227, 168, 156, 250 );
+
