@@ -1,0 +1,460 @@
+(*----------------------------------------------------------------------*)
+(*                Program parameter names and addresses                 *)
+(*----------------------------------------------------------------------*)
+
+CONST
+   Max_Param_Names = 206;
+
+TYPE
+
+   Param_Type      = ( Integer_Param,  String_Param,   Char_Param,
+                       LongInt_Param,  Boolean_Param,  Byte_Param,
+                       Path_Param,     Transfer_Param, Terminal_Param,
+                       Date_Param,     ScrOrder_Param, Color_Param,
+                       VidMode_Param,  Null_Param,     Hexi_Param,
+                       BColor_Param,   Word_Param,     Box_Param,
+                       Time_Param,     Menu_Param,     ExtTrans_Param,
+                       Host_Param,     FileN_Param,    KCheck_Param,
+                       Key_Param,      VT100_Param,    Ascii_Param,
+                       Xmodem_Param,   PosInt_Param,   SpecChar_Param );
+
+   Param_IPtr_Type = ^INTEGER;
+   Param_WPtr_Type = ^WORD;
+   Param_LPtr_Type = ^BOOLEAN;
+   Param_XPtr_Type = ^LONGINT;
+   Param_SPtr_Type = ^AnyStr;
+   Param_CPtr_Type = ^CHAR;
+   Param_BPtr_Type = ^BYTE;
+   Param_FPtr_Type = ^Transfer_Type;
+   Param_TPtr_Type = ^Terminal_Type;
+   Param_DPtr_Type = ^Date_Format_Type;
+   Param_OPtr_Type = ^Script_Search_Order_Type;
+   Param_YPtr_Type = ^Time_Format_Type;
+
+TYPE
+   Parameter_Record_Type = RECORD
+                              PName   : Char_2;
+                              PType   : Param_Type;
+                              PAddr   : POINTER;
+                              PDesc   : StringPtr;
+                           END;
+
+(* STRUCTURED *) CONST
+   Parameters : ARRAY[ 1 .. Max_Param_Names ] OF Parameter_Record_Type =
+                (
+    (*  1*)      ( PName : '01'; PType : Menu_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*  2*)      ( PName : '02'; PType : Ascii_Param   ; PAddr : NIL; PDesc : NIL ),
+    (*  3*)      ( PName : '03'; PType : Xmodem_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*  4*)      ( PName : '04'; PType : ExtTrans_Param; PAddr : NIL; PDesc : NIL ),
+    (*  5*)      ( PName : '05'; PType : VT100_Param   ; PAddr : NIL; PDesc : NIL ),
+    (*  6*)      ( PName : '06'; PType : Key_Param     ; PAddr : NIL; PDesc : NIL ),
+    (*  7*)      ( PName : '07'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*  8*)      ( PName : '08'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*  9*)      ( PName : '09'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 10*)      ( PName : '10'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 11*)      ( PName : '11'; PType : Menu_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 12*)      ( PName : '12'; PType : Menu_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 13*)      ( PName : 'AB'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 14*)      ( PName : 'AC'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 15*)      ( PName : 'AD'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 16*)      ( PName : 'AE'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 17*)      ( PName : 'AF'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 18*)      ( PName : 'AK'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 19*)      ( PName : 'AL'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 20*)      ( PName : 'AM'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 21*)      ( PName : 'AP'; PType : SpecChar_Param; PAddr : NIL; PDesc : NIL ),
+    (* 22*)      ( PName : 'AS'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 23*)      ( PName : 'AT'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 24*)      ( PName : 'AU'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 25*)      ( PName : 'AW'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 26*)      ( PName : 'AX'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 27*)      ( PName : 'AZ'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 28*)      ( PName : 'BA'; PType : Word_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 29*)      ( PName : 'BB'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 30*)      ( PName : 'BC'; PType : Box_Param     ; PAddr : NIL; PDesc : NIL ),
+    (* 31*)      ( PName : 'BD'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 32*)      ( PName : 'BL'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 33*)      ( PName : 'BP'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 34*)      ( PName : 'BS'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 35*)      ( PName : 'CA'; PType : Color_Param   ; PAddr : NIL; PDesc : NIL ),
+    (* 36*)      ( PName : 'CB'; PType : BColor_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 37*)      ( PName : 'CC'; PType : Color_Param   ; PAddr : NIL; PDesc : NIL ),
+    (* 38*)      ( PName : 'CF'; PType : Color_Param   ; PAddr : NIL; PDesc : NIL ),
+    (* 39*)      ( PName : 'CH'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 40*)      ( PName : 'CJ'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 41*)      ( PName : 'CK'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 42*)      ( PName : 'CM'; PType : Color_Param   ; PAddr : NIL; PDesc : NIL ),
+    (* 43*)      ( PName : 'CS'; PType : BColor_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 44*)      ( PName : 'CT'; PType : Color_Param   ; PAddr : NIL; PDesc : NIL ),
+    (* 45*)      ( PName : 'DA'; PType : Byte_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 46*)      ( PName : 'DC'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 47*)      ( PName : 'DD'; PType : Path_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 48*)      ( PName : 'DE'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 49*)      ( PName : 'DF'; PType : Date_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 50*)      ( PName : 'DI'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 51*)      ( PName : 'DL'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 52*)      ( PName : 'DO'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 53*)      ( PName : 'DP'; PType : Char_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 54*)      ( PName : 'DR'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 55*)      ( PName : 'DS'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 56*)      ( PName : 'DT'; PType : Char_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 57*)      ( PName : 'DY'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 58*)      ( PName : 'EB'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 59*)      ( PName : 'EC'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 60*)      ( PName : 'EG'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 61*)      ( PName : 'EK'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 62*)      ( PName : 'EN'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 63*)      ( PName : 'EP'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 64*)      ( PName : 'EU'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 65*)      ( PName : 'F0'; PType : ExtTrans_Param; PAddr : NIL; PDesc : NIL ),
+    (* 66*)      ( PName : 'F1'; PType : ExtTrans_Param; PAddr : NIL; PDesc : NIL ),
+    (* 67*)      ( PName : 'F2'; PType : ExtTrans_Param; PAddr : NIL; PDesc : NIL ),
+    (* 68*)      ( PName : 'F3'; PType : ExtTrans_Param; PAddr : NIL; PDesc : NIL ),
+    (* 69*)      ( PName : 'F4'; PType : ExtTrans_Param; PAddr : NIL; PDesc : NIL ),
+    (* 70*)      ( PName : 'F5'; PType : ExtTrans_Param; PAddr : NIL; PDesc : NIL ),
+    (* 71*)      ( PName : 'F6'; PType : ExtTrans_Param; PAddr : NIL; PDesc : NIL ),
+    (* 72*)      ( PName : 'F7'; PType : ExtTrans_Param; PAddr : NIL; PDesc : NIL ),
+    (* 73*)      ( PName : 'F8'; PType : ExtTrans_Param; PAddr : NIL; PDesc : NIL ),
+    (* 74*)      ( PName : 'F9'; PType : ExtTrans_Param; PAddr : NIL; PDesc : NIL ),
+    (* 75*)      ( PName : 'FC'; PType : Char_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 76*)      ( PName : 'FD'; PType : Char_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 77*)      ( PName : 'FF'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 78*)      ( PName : 'FH'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 79*)      ( PName : 'FM'; PType : Char_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 80*)      ( PName : 'FN'; PType : FileN_Param   ; PAddr : NIL; PDesc : NIL ),
+    (* 81*)      ( PName : 'FP'; PType : Path_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 82*)      ( PName : 'FS'; PType : Char_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 83*)      ( PName : 'FW'; PType : Char_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 84*)      ( PName : 'GD'; PType : Integer_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 85*)      ( PName : 'GL'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 86*)      ( PName : 'GW'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 87*)      ( PName : 'HB'; PType : LongInt_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 88*)      ( PName : 'HD'; PType : Path_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 89*)      ( PName : 'HP'; PType : Host_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 90*)      ( PName : 'HU'; PType : Path_Param    ; PAddr : NIL; PDesc : NIL ),
+    (* 91*)      ( PName : 'HW'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 92*)      ( PName : 'I1'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 93*)      ( PName : 'I2'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 94*)      ( PName : 'I3'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 95*)      ( PName : 'I4'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 96*)      ( PName : 'IB'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (* 97*)      ( PName : 'IM'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (* 98*)      ( PName : 'K8'; PType : SpecChar_Param; PAddr : NIL; PDesc : NIL ),
+    (* 99*)      ( PName : 'KA'; PType : SpecChar_Param; PAddr : NIL; PDesc : NIL ),
+    (*100*)      ( PName : 'KC'; PType : KCheck_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*101*)      ( PName : 'KD'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*102*)      ( PName : 'KE'; PType : SpecChar_Param; PAddr : NIL; PDesc : NIL ),
+    (*103*)      ( PName : 'KH'; PType : SpecChar_Param; PAddr : NIL; PDesc : NIL ),
+    (*104*)      ( PName : 'KK'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*105*)      ( PName : 'KL'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*106*)      ( PName : 'KN'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*107*)      ( PName : 'KP'; PType : SpecChar_Param; PAddr : NIL; PDesc : NIL ),
+    (*108*)      ( PName : 'KQ'; PType : SpecChar_Param; PAddr : NIL; PDesc : NIL ),
+    (*109*)      ( PName : 'KR'; PType : SpecChar_Param; PAddr : NIL; PDesc : NIL ),
+    (*110*)      ( PName : 'KS'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*111*)      ( PName : 'KT'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*112*)      ( PName : 'KW'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*113*)      ( PName : 'KX'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*114*)      ( PName : 'LE'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*115*)      ( PName : 'LF'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*116*)      ( PName : 'LN'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*117*)      ( PName : 'LO'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*118*)      ( PName : 'MA'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*119*)      ( PName : 'MB'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*120*)      ( PName : 'MC'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*121*)      ( PName : 'MD'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*122*)      ( PName : 'ME'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*123*)      ( PName : 'MF'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*124*)      ( PName : 'MG'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*125*)      ( PName : 'MH'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*126*)      ( PName : 'MI'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*127*)      ( PName : 'ML'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*128*)      ( PName : 'MN'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*129*)      ( PName : 'MO'; PType : LongInt_Param ; PAddr : NIL; PDesc : NIL ),
+    (*130*)      ( PName : 'MR'; PType : LongInt_Param ; PAddr : NIL; PDesc : NIL ),
+    (*131*)      ( PName : 'MS'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*132*)      ( PName : 'MT'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*133*)      ( PName : 'MW'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*134*)      ( PName : 'MX'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*135*)      ( PName : 'NL'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*136*)      ( PName : 'OB'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*137*)      ( PName : 'P1'; PType : Hexi_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*138*)      ( PName : 'P2'; PType : Hexi_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*139*)      ( PName : 'P3'; PType : Hexi_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*140*)      ( PName : 'P4'; PType : Hexi_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*141*)      ( PName : 'PA'; PType : Char_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*142*)      ( PName : 'PM'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*143*)      ( PName : 'PO'; PType : Byte_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*144*)      ( PName : 'PS'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*145*)      ( PName : 'SA'; PType : BColor_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*146*)      ( PName : 'SB'; PType : Color_Param   ; PAddr : NIL; PDesc : NIL ),
+    (*147*)      ( PName : 'SC'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*148*)      ( PName : 'SD'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*149*)      ( PName : 'SE'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*150*)      ( PName : 'SF'; PType : Path_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*151*)      ( PName : 'SG'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*152*)      ( PName : 'SH'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*153*)      ( PName : 'SL'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*154*)      ( PName : 'SM'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*155*)      ( PName : 'SO'; PType : ScrOrder_Param; PAddr : NIL; PDesc : NIL ),
+    (*156*)      ( PName : 'SP'; PType : Char_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*157*)      ( PName : 'SR'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*158*)      ( PName : 'SS'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*159*)      ( PName : 'ST'; PType : Byte_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*160*)      ( PName : 'SU'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*161*)      ( PName : 'SZ'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*162*)      ( PName : 'T1'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*163*)      ( PName : 'T2'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*164*)      ( PName : 'T3'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*165*)      ( PName : 'T4'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*166*)      ( PName : 'T5'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*167*)      ( PName : 'TB'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*168*)      ( PName : 'TE'; PType : Terminal_Param; PAddr : NIL; PDesc : NIL ),
+    (*169*)      ( PName : 'TF'; PType : Time_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*170*)      ( PName : 'TM'; PType : VidMode_Param ; PAddr : NIL; PDesc : NIL ),
+    (*171*)      ( PName : 'TT'; PType : Transfer_Param; PAddr : NIL; PDesc : NIL ),
+    (*172*)      ( PName : 'TU'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*173*)      ( PName : 'U0'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*174*)      ( PName : 'UP'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*175*)      ( PName : 'US'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*176*)      ( PName : 'V1'; PType : Hexi_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*177*)      ( PName : 'V2'; PType : Hexi_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*178*)      ( PName : 'V3'; PType : Hexi_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*179*)      ( PName : 'V4'; PType : Hexi_Param    ; PAddr : NIL; PDesc : NIL ),
+    (*180*)      ( PName : 'VA'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*181*)      ( PName : 'VB'; PType : BColor_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*182*)      ( PName : 'VC'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*183*)      ( PName : 'VE'; PType : Color_Param   ; PAddr : NIL; PDesc : NIL ),
+    (*184*)      ( PName : 'VF'; PType : Color_Param   ; PAddr : NIL; PDesc : NIL ),
+    (*185*)      ( PName : 'VK'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*186*)      ( PName : 'VN'; PType : String_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*187*)      ( PName : 'VS'; PType : BColor_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*188*)      ( PName : 'VU'; PType : Color_Param   ; PAddr : NIL; PDesc : NIL ),
+    (*189*)      ( PName : 'WH'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*190*)      ( PName : 'WR'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*191*)      ( PName : 'WS'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*192*)      ( PName : 'XA'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*193*)      ( PName : 'XB'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*194*)      ( PName : 'XC'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*195*)      ( PName : 'XD'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*196*)      ( PName : 'XH'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*197*)      ( PName : 'XM'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*198*)      ( PName : 'XO'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*199*)      ( PName : 'XS'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*200*)      ( PName : 'XT'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL ),
+    (*201*)      ( PName : 'Y0'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*202*)      ( PName : 'YF'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*203*)      ( PName : 'YT'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*204*)      ( PName : 'YX'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*205*)      ( PName : 'ZA'; PType : Boolean_Param ; PAddr : NIL; PDesc : NIL ),
+    (*206*)      ( PName : 'ZB'; PType : PosInt_Param  ; PAddr : NIL; PDesc : NIL )
+ );
+
+(* STRUCTURED *) CONST
+   Desc_01: STRING[29] = 'Serial port hardware settings';
+   Desc_02: STRING[25] = 'Ascii transfer parameters';
+   Desc_03: STRING[33] = 'Xmodem/Ymodem transfer parameters';
+   Desc_04: STRING[29] = 'External protocol definitions';
+   Desc_05: STRING[14] = 'VT100 settings';
+   Desc_06: STRING[16] = 'Command mode key';
+   Desc_07: STRING[23] = 'Use 24 hour time format';
+   Desc_08: STRING[11] = 'Date format';
+   Desc_09: STRING[19] = 'Script search order';
+   Desc_10: STRING[34] = 'Send CR/LF sequence at end of line';
+   Desc_11: STRING[42] = 'Backspace key sends BS, <CTRL>BS sends DEL';
+   Desc_12: STRING[42] = 'Backspace key sends DEL, <CTRL>BS sends BS';
+   Desc_AB: STRING[30] = 'Detect caller speed from modem';
+   Desc_AC: STRING[20] = 'Intercharacter delay';
+   Desc_AD: STRING[28] = 'Display text during transfer';
+   Desc_AE: STRING[1] = ' ';
+   Desc_AF: STRING[24] = 'Send empty line as blank';
+   Desc_AK: STRING[23] = 'Auto load function keys';
+   Desc_AL: STRING[15] = 'Interline delay';
+   Desc_AM: STRING[20] = 'Run in attended mode';
+   Desc_AP: STRING[16] = 'Pacing character';
+   Desc_AS: STRING[22] = 'Maximum text line size';
+   Desc_AT: STRING[29] = 'Translate incoming characters';
+   Desc_AU: STRING[23] = 'CTTY driver name prefix';
+   Desc_AW: STRING[46] = 'ATI EGA Wonder/ATI VIP VGA (TM) card installed';
+   Desc_AX: STRING[20] = 'Byte stream transfer';
+   Desc_AZ: STRING[31] = 'Send <CTRL>Z at end of transfer';
+   Desc_BA: STRING[9] = 'Baud rate';
+   Desc_BB: STRING[18] = 'Review buffer size';
+   Desc_BC: STRING[22] = 'Box drawing characters';
+   Desc_BD: STRING[28] = 'Match speed of called system';
+   Desc_BL: STRING[29] = 'Break length in 1/100 seconds';
+   Desc_BP: STRING[24] = 'Do CompuServe B protocol';
+   Desc_BS: STRING[19] = 'Backspace key sends';
+   Desc_CA: STRING[25] = 'Secondary menu text color';
+   Desc_CB: STRING[16] = 'Background color';
+   Desc_CC: STRING[26] = 'Secondary menu title color';
+   Desc_CF: STRING[16] = 'Foreground color';
+   Desc_CH: STRING[24] = 'Carrier line always high';
+   Desc_CJ: STRING[32] = 'Close serial port on jump to DOS';
+   Desc_CK: STRING[1] = ' ';
+   Desc_CM: STRING[16] = 'Menu frame color';
+   Desc_CS: STRING[12] = 'Border color';
+   Desc_CT: STRING[15] = 'Menu text color';
+   Desc_DA: STRING[9] = 'Data bits';
+   Desc_DC: STRING[29] = 'Maximum physical screen width';
+   Desc_DD: STRING[18] = 'Download directory';
+   Desc_DE: STRING[24] = 'Ctrl-Backspace key sends';
+   Desc_DF: STRING[11] = 'Date format';
+   Desc_DI: STRING[30] = 'Use DOS function $0A for input';
+   Desc_DL: STRING[30] = 'Maximum physical screen length';
+   Desc_DO: STRING[22] = 'Use DOS console output';
+   Desc_DP: STRING[32] = 'Default dialing prefix character';
+   Desc_DR: STRING[15] = 'Drop DTR at end';
+   Desc_DS: STRING[25] = 'Size of dialing directory';
+   Desc_DT: STRING[33] = 'Default dialing postfix character';
+   Desc_DY: STRING[28] = 'Allow switch to short blocks';
+   Desc_EB: STRING[23] = 'Do EXEC PC BBS commands';
+   Desc_EC: STRING[13] = 'Exact capture';
+   Desc_EG: STRING[23] = 'Allow EGA graphics mode';
+   Desc_EK: STRING[25] = 'Recognize extended keypad';
+   Desc_EN: STRING[11] = 'Editor name';
+   Desc_EP: STRING[32] = 'Evict partially downloaded files';
+   Desc_EU: STRING[37] = 'Allow DOS calls for 101 key keyboards';
+   Desc_F0: STRING[33] = 'External file transfer protocol 1';
+   Desc_F1: STRING[33] = 'External file transfer protocol 2';
+   Desc_F2: STRING[33] = 'External file transfer protocol 3';
+   Desc_F3: STRING[33] = 'External file transfer protocol 4';
+   Desc_F4: STRING[33] = 'External file transfer protocol 5';
+   Desc_F5: STRING[33] = 'External file transfer protocol 6';
+   Desc_F6: STRING[33] = 'External file transfer protocol 7';
+   Desc_F7: STRING[33] = 'External file transfer protocol 8';
+   Desc_F8: STRING[33] = 'External file transfer protocol 9';
+   Desc_F9: STRING[34] = 'External file transfer protocol 10';
+   Desc_FC: STRING[28] = 'Function key carriage return';
+   Desc_FD: STRING[18] = 'Function key delay';
+   Desc_FF: STRING[34] = 'Auto find file names for transfers';
+   Desc_FH: STRING[38] = 'Function key intercharacter delay (ms)';
+   Desc_FM: STRING[30] = 'Function key control character';
+   Desc_FN: STRING[22] = 'File name for transfer';
+   Desc_FP: STRING[22] = 'Function key directory';
+   Desc_FS: STRING[30] = 'Function key command character';
+   Desc_FW: STRING[25] = 'Function key await string';
+   Desc_GD: STRING[27] = '# hours local time lags GMT';
+   Desc_GL: STRING[20] = 'Use gossip line mode';
+   Desc_GW: STRING[27] = 'Gossip mode top window size';
+   Desc_HB: STRING[40] = '# seconds to wait before blanking screen';
+   Desc_HD: STRING[28] = 'Host mode download directory';
+   Desc_HP: STRING[19] = 'Host mode privilege';
+   Desc_HU: STRING[26] = 'Host mode upload directory';
+   Desc_HW: STRING[21] = 'Hard-wired connection';
+   Desc_I1: STRING[29] = 'Port 1 interrupt request line';
+   Desc_I2: STRING[29] = 'Port 2 interrupt request line';
+   Desc_I3: STRING[29] = 'Port 3 interrupt request line';
+   Desc_I4: STRING[29] = 'Port 4 interrupt request line';
+   Desc_IB: STRING[22] = 'Comm buffer input size';
+   Desc_IM: STRING[28] = 'Start editing in insert mode';
+   Desc_K8: STRING[28] = 'Eighth-bit quoting character';
+   Desc_KA: STRING[19] = 'Handshake character';
+   Desc_KC: STRING[16] = 'Block check type';
+   Desc_KD: STRING[17] = 'Kermit debug mode';
+   Desc_KE: STRING[22] = 'End of block character';
+   Desc_KH: STRING[22] = 'Block header character';
+   Desc_KK: STRING[25] = 'Allow Kermit autodownload';
+   Desc_KL: STRING[20] = 'Sliding windows size';
+   Desc_KN: STRING[24] = 'Number of pad characters';
+   Desc_KP: STRING[13] = 'Pad character';
+   Desc_KQ: STRING[23] = 'Control quote character';
+   Desc_KR: STRING[22] = 'Repeat quote character';
+   Desc_KS: STRING[24] = 'Maximum short block size';
+   Desc_KT: STRING[18] = 'Timeout in seconds';
+   Desc_KW: STRING[27] = 'Delay before sending (secs)';
+   Desc_KX: STRING[23] = 'Maximum long block size';
+   Desc_LE: STRING[13] = 'Local echo on';
+   Desc_LF: STRING[30] = 'Add line feeds to incoming CRs';
+   Desc_LN: STRING[17] = 'File browser name';
+   Desc_LO: STRING[27] = 'Perform logging to log file';
+   Desc_MA: STRING[19] = 'Answer phone string';
+   Desc_MB: STRING[12] = 'Busy message';
+   Desc_MC: STRING[15] = 'Connect message';
+   Desc_MD: STRING[15] = 'Dialing command';
+   Desc_ME: STRING[13] = 'Escape string';
+   Desc_MF: STRING[23] = 'Dialing command postfix';
+   Desc_MG: STRING[19] = 'Ring detect message';
+   Desc_MH: STRING[14] = 'Hang Up string';
+   Desc_MI: STRING[21] = 'Initialization string';
+   Desc_ML: STRING[29] = 'Hold line after abortive dial';
+   Desc_MN: STRING[18] = 'No Carrier message';
+   Desc_MO: STRING[22] = 'Dialing timeout (secs)';
+   Desc_MR: STRING[18] = 'Redial time (secs)';
+   Desc_MS: STRING[28] = 'Host mode modem setup string';
+   Desc_MT: STRING[17] = 'Escape delay (ms)';
+   Desc_MW: STRING[25] = 'Intercharacter delay (ms)';
+   Desc_MX: STRING[28] = 'Host mode termination string';
+   Desc_NL: STRING[30] = 'Add line feeds to outgoing CRs';
+   Desc_OB: STRING[23] = 'Comm buffer output size';
+   Desc_P1: STRING[23] = 'Port 1 hardware address';
+   Desc_P2: STRING[23] = 'Port 2 hardware address';
+   Desc_P3: STRING[23] = 'Port 3 hardware address';
+   Desc_P4: STRING[23] = 'Port 4 hardware address';
+   Desc_PA: STRING[6] = 'Parity';
+   Desc_PM: STRING[27] = 'Play music in ANSI/BBS mode';
+   Desc_PO: STRING[11] = 'Serial port';
+   Desc_PS: STRING[20] = 'Printer setup string';
+   Desc_SA: STRING[28] = 'Status line foreground color';
+   Desc_SB: STRING[28] = 'Status line background color';
+   Desc_SC: STRING[24] = 'Script learn buffer size';
+   Desc_SD: STRING[26] = 'Text mode screen dump file';
+   Desc_SE: STRING[27] = 'Display time on status line';
+   Desc_SF: STRING[16] = 'Script directory';
+   Desc_SG: STRING[30] = 'Graphics mode screen dump file';
+   Desc_SH: STRING[31] = 'Strip high bit in terminal mode';
+   Desc_SL: STRING[24] = 'Script learn lines count';
+   Desc_SM: STRING[21] = 'Silent (mute) mode on';
+   Desc_SO: STRING[19] = 'Script search order';
+   Desc_SP: STRING[23] = 'Script parameter marker';
+   Desc_SR: STRING[39] = 'Reverse standard colors for status line';
+   Desc_SS: STRING[19] = 'Display status line';
+   Desc_ST: STRING[9] = 'Stop bits';
+   Desc_SU: STRING[19] = 'Auto unload scripts';
+   Desc_SZ: STRING[22] = 'Use software scrolling';
+   Desc_T1: STRING[31] = 'User terminal 1 definition file';
+   Desc_T2: STRING[31] = 'User terminal 2 definition file';
+   Desc_T3: STRING[31] = 'User terminal 3 definition file';
+   Desc_T4: STRING[31] = 'User terminal 4 definition file';
+   Desc_T5: STRING[31] = 'User terminal 5 definition file';
+   Desc_TB: STRING[22] = '# bells after transfer';
+   Desc_TE: STRING[19] = 'Terminal to emulate';
+   Desc_TF: STRING[1] = ' ';
+   Desc_TM: STRING[10] = 'Video mode';
+   Desc_TT: STRING[26] = 'Default file transfer type';
+   Desc_TU: STRING[38] = 'Translate keyboard input to upper case';
+   Desc_U0: STRING[23] = 'Use block 0 information';
+   Desc_UP: STRING[42] = 'Show previous command in command line mode';
+   Desc_US: STRING[22] = 'Use short dialing menu';
+   Desc_V1: STRING[23] = 'Port 1 interrupt vector';
+   Desc_V2: STRING[23] = 'Port 2 interrupt vector';
+   Desc_V3: STRING[23] = 'Port 3 interrupt vector';
+   Desc_V4: STRING[23] = 'Port 4 interrupt vector';
+   Desc_VA: STRING[24] = 'VT100 answerback message';
+   Desc_VB: STRING[22] = 'VT100 background color';
+   Desc_VC: STRING[38] = 'Do VT100 applic./numeric keypad switch';
+   Desc_VE: STRING[16] = 'VT100 bold color';
+   Desc_VF: STRING[22] = 'VT100 foreground color';
+   Desc_VK: STRING[31] = 'Key file for VT100 applic. mode';
+   Desc_VN: STRING[31] = 'Key file for VT100 numeric mode';
+   Desc_VS: STRING[18] = 'VT100 border color';
+   Desc_VU: STRING[21] = 'VT100 underline color';
+   Desc_WH: STRING[40] = 'Time to hold window displays (1/10 secs)';
+   Desc_WR: STRING[38] = 'Wait for retrace when writing to video';
+   Desc_WS: STRING[30] = 'Write directly to video memory';
+   Desc_XA: STRING[25] = 'Acknowledgement wait time';
+   Desc_XB: STRING[25] = 'File transfer buffer size';
+   Desc_XC: STRING[19] = 'Character wait time';
+   Desc_XD: STRING[20] = 'Check Data Set Ready';
+   Desc_XH: STRING[24] = 'Start of block wait time';
+   Desc_XM: STRING[19] = 'Use exploding menus';
+   Desc_XO: STRING[24] = 'Do XON/XOFF flow control';
+   Desc_XS: STRING[19] = 'Check Clear To Send';
+   Desc_XT: STRING[32] = 'Maximum allowed errors per block';
+   Desc_Y0: STRING[34] = 'Send block 0 in Xmodem 1K transfer';
+   Desc_YF: STRING[37] = 'Send/receive full path name in Ymodem';
+   Desc_YT: STRING[20] = 'Allow YTerm protocol';
+   Desc_YX: STRING[30] = 'Honor XON/XOFF in Ymodem sends';
+   Desc_ZA: STRING[25] = 'Allow Zmodem autodownload';
+   Desc_ZB: STRING[33] = 'Block length for Zmodem transfers';
+

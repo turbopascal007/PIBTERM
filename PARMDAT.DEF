@@ -1,0 +1,206 @@
+DA Byte_Param     Data_Bits                 Data bits
+PA Char_Param     Parity                    Parity
+ST Byte_Param     Stop_Bits                 Stop bits
+BA Word_Param     Baud_Rate                 Baud rate
+PO Byte_Param     Comm_Port                 Serial port
+BS String_Param   BS_String                 Backspace key sends
+DE String_Param   Ctrl_BS_String            Ctrl-Backspace key sends
+TE Terminal_Param Terminal_To_Emulate       Terminal to emulate
+LO Boolean_Param  Logging_On                Perform logging to log file
+LF Boolean_Param  Add_Lf                    Add line feeds to incoming CRs
+MI String_Param   Modem_Init                Initialization string
+MD String_Param   Modem_Dial                Dialing command
+MC String_Param   Modem_Connect             Connect message
+MN String_Param   Modem_No_Carrier          No Carrier message
+MB String_Param   Modem_Busy                Busy message
+ME String_Param   Modem_Escape              Escape string
+MT PosInt_Param   Modem_Escape_Time         Escape delay (ms)
+MH String_Param   Modem_Hang_Up             Hang Up string
+MO LongInt_Param  Modem_Time_Out            Dialing timeout (secs)
+MR LongInt_Param  Modem_Redial_Delay        Redial time (secs)
+SM Boolean_Param  Silent_Mode               Silent (mute) mode on
+PM Boolean_Param  Play_Music_On             Play music in ANSI/BBS mode
+LE Boolean_Param  Local_Echo                Local echo on
+FC Char_Param     FK_CR                     Function key carriage return
+FD Char_Param     FK_Delay                  Function key delay
+FW Char_Param     FK_Wait_For               Function key await string
+TT Transfer_Param Default_Transfer_Type     Default file transfer type
+SD String_Param   Screen_Dump_Name          Text mode screen dump file
+GD Integer_Param  GMT_Difference            # hours local time lags GMT
+TB PosInt_Param   Transfer_Bells            # bells after transfer
+MA String_Param   Modem_Answer              Answer phone string
+MS String_Param   Modem_Host_Set            Host mode modem setup string
+FM Char_Param     FK_Ctrl_Mark              Function key control character
+TM VidMode_Param  New_Text_Mode             Video mode
+CF Color_Param    New_ForeGround_Color      Foreground color
+CB BColor_Param   New_BackGround_Color      Background color
+CT Color_Param    New_Menu_Text_Color       Menu text color
+CM Color_Param    New_Menu_Frame_Color      Menu frame color
+MW PosInt_Param   Modem_Command_Delay       Intercharacter delay (ms)
+BP Boolean_Param  CompuServe_B_On           Do CompuServe B protocol
+EB Boolean_Param  Mahoney_On                Do EXEC PC BBS commands
+DP Char_Param     Default_Prefix            Default dialing prefix character
+BB PosInt_Param   Max_Review_Length         Review buffer size
+XM Boolean_Param  Exploding_Menus           Use exploding menus
+CH Boolean_Param  Modem_Carrier_High        Carrier line always high
+XB PosInt_Param   Max_Write_Buffer          File transfer buffer size
+AB Boolean_Param  Host_Auto_Baud            Detect caller speed from modem
+VB BColor_Param   VT100_BackGround_Color    VT100 background color
+VF Color_Param    VT100_ForeGround_Color    VT100 foreground color
+VE Color_Param    VT100_Bold_Color          VT100 bold color
+VU Color_Param    VT100_Underline_Color     VT100 underline color
+KC KCheck_Param   Kermit_Chk_Type           Block check type
+KD Boolean_Param  Kermit_Debug              Kermit debug mode
+KE SpecChar_Param Kermit_EOL                End of block character
+KH SpecChar_Param Kermit_Header_Char        Block header character
+KN PosInt_Param   Kermit_Npad               Number of pad characters
+KP SpecChar_Param Kermit_Pad_Char           Pad character
+KQ SpecChar_Param Kermit_Quote_Char         Control quote character
+KR SpecChar_Param Kermit_Repeat_Char        Repeat quote character
+KS PosInt_Param   Kermit_Init_Packet_Size   Maximum short block size
+KT PosInt_Param   Kermit_TimeOut            Timeout in seconds
+KW PosInt_Param   Kermit_Delay_Time         Delay before sending (secs)
+K8 SpecChar_Param Kermit_Quote_8_Char       Eighth-bit quoting character
+DT Char_Param     Default_Postfix           Default dialing postfix character
+WS Boolean_Param  Write_Screen_Memory_Par   Write directly to video memory
+BD Boolean_Param  Alter_Baud_Rate           Match speed of called system
+EC Boolean_Param  Exact_Capture             Exact capture
+FS Char_Param     FK_Script_Ch              Function key command character
+XS Boolean_Param  Check_CTS                 Check Clear To Send
+XD Boolean_Param  Check_DSR                 Check Data Set Ready
+MX String_Param   Modem_Host_UnSet          Host mode termination string
+MF String_Param   Modem_Dial_End            Dialing command postfix
+HW Boolean_Param  Hard_Wired                Hard-wired connection
+BL PosInt_Param   Break_Length              Break length in 1/100 seconds
+DD Path_Param     Download_Dir_Path         Download directory
+GW PosInt_Param   Gossip_Window_Size        Gossip mode top window size
+GL Boolean_Param  Gossip_Line_Mode          Use gossip line mode
+SG String_Param   Graphics_Dump_Name        Graphics mode screen dump file
+SP Char_Param     Script_Parameter_Marker   Script parameter marker
+KL PosInt_Param   Kermit_Window_Size        Sliding windows size
+DR Boolean_Param  Drop_Dtr_At_End           Drop DTR at end
+CJ Boolean_Param  Close_Comm_For_Dos        Close serial port on jump to DOS
+US Boolean_Param  Use_Short_Dial_Menu       Use short dialing menu
+WR Boolean_Param  Wait_For_Retrace_Par      Wait for retrace when writing to video
+EN String_Param   Editor_Name               Editor name
+LN String_Param   Browser_Name              File browser name
+SS Boolean_Param  Show_Status_Line          Display status line
+SE Boolean_Param  Show_Status_Time          Display time on status line
+PS String_Param   Printer_Setup             Printer setup string
+XO Boolean_Param  Do_Xon_Xoff_Checks        Do XON/XOFF flow control
+CS BColor_Param   New_Border_Color          Border color
+VS BColor_Param   VT100_Border_Color        VT100 border color
+VA String_Param   VT100_Answerback_Message  VT100 answerback message
+DY Boolean_Param  Downsize_Ymodem           Allow switch to short blocks
+EP Boolean_Param  Evict_Partial_Trans       Evict partially downloaded files
+SC PosInt_Param   Script_Learn_Buffer_Size  Script learn buffer size
+SL PosInt_Param   Script_Learn_Lines        Script learn lines count
+DF Date_Param     Date_Format               Date format
+TF Time_Param     Time_Format
+SF Path_Param     Script_Path               Script directory
+EU Boolean_Param  Extended_Keyboard         Allow DOS calls for 101 key keyboards
+DS PosInt_Param   Dialing_Dir_Size_Max      Size of dialing directory
+FP Path_Param     Function_Key_Path         Function key directory
+HD Path_Param     Host_Mode_Download        Host mode download directory
+HU Path_Param     Host_Mode_Upload          Host mode upload directory
+HB LongInt_Param  Host_Mode_Blank_Time      # seconds to wait before blanking screen
+Y0 Boolean_Param  Use_Ymodem_Header         Send block 0 in Xmodem 1K transfer
+SO ScrOrder_Param Script_Search_Order       Script search order
+U0 Boolean_Param  Use_Block_Zero            Use block 0 information
+EK Boolean_Param  Extended_Keypad           Recognize extended keypad
+KA SpecChar_Param Kermit_Handshake_Char     Handshake character
+BC Box_Param      Box_Chars                 Box drawing characters
+CK PosInt_Param   Command_Key
+AM Boolean_Param  Attended_Mode             Run in attended mode
+AC PosInt_Param   Ascii_Char_Delay          Intercharacter delay
+AL PosInt_Param   Ascii_Line_Delay          Interline delay
+AP SpecChar_Param Ascii_Pacing_Char         Pacing character
+AS PosInt_Param   Ascii_Line_Size           Maximum text line size
+AX Boolean_Param  Ascii_Send_Asis           Byte stream transfer
+AE String_Param   Ascii_CR_LF_String
+AF Boolean_Param  Ascii_Send_Blank          Send empty line as blank
+AZ Boolean_Param  Ascii_Use_CtrlZ           Send <CTRL>Z at end of transfer
+AD Boolean_Param  Ascii_Show_Text           Display text during transfer
+AT Boolean_Param  Ascii_Translate           Translate incoming characters
+IM Boolean_Param  Edit_Insert_Mode          Start editing in insert mode
+XC PosInt_Param   Xmodem_Char_Wait          Character wait time
+XA PosInt_Param   Xmodem_Ack_Wait           Acknowledgement wait time
+XT PosInt_Param   Xmodem_Max_Errors         Maximum allowed errors per block
+XH PosInt_Param   Xmodem_Block_Wait         Start of block wait time
+AK Boolean_Param  Auto_Load_FunKeys         Auto load function keys
+DI Boolean_Param  Use_Dos_Buffer_In         Use DOS function $0A for input
+AU String_Param   Host_CTTY_Device          CTTY driver name prefix
+YT Boolean_Param  YTerm_On                  Allow YTerm protocol
+DO Boolean_Param  Use_Dos_Con_Output        Use DOS console output
+SU Boolean_Param  Auto_Unload_Scripts       Auto unload scripts
+MG String_Param   Modem_Ring                Ring detect message
+DL PosInt_Param   New_Max_Screen_Line       Maximum physical screen length
+DC PosInt_Param   New_Max_Screen_Col        Maximum physical screen width
+IB PosInt_Param   Async_Buffer_Length       Comm buffer input size
+OB PosInt_Param   Async_OBuffer_Length      Comm buffer output size
+F0 ExtTrans_Param External_Trans_Def[1]     External file transfer protocol 1
+F1 ExtTrans_Param External_Trans_Def[2]     External file transfer protocol 2
+F2 ExtTrans_Param External_Trans_Def[3]     External file transfer protocol 3
+F3 ExtTrans_Param External_Trans_Def[4]     External file transfer protocol 4
+F4 ExtTrans_Param External_Trans_Def[5]     External file transfer protocol 5
+F5 ExtTrans_Param External_Trans_Def[6]     External file transfer protocol 6
+F6 ExtTrans_Param External_Trans_Def[7]     External file transfer protocol 7
+F7 ExtTrans_Param External_Trans_Def[8]     External file transfer protocol 8
+F8 ExtTrans_Param External_Trans_Def[9]     External file transfer protocol 9
+F9 ExtTrans_Param External_Trans_Def[10]    External file transfer protocol 10
+FF Boolean_Param  Auto_Find_FileNames       Auto find file names for transfers
+P1 Hexi_Param     Default_Com_Base[1]       Port 1 hardware address
+P2 Hexi_Param     Default_Com_Base[2]       Port 2 hardware address
+P3 Hexi_Param     Default_Com_Base[3]       Port 3 hardware address
+P4 Hexi_Param     Default_Com_Base[4]       Port 4 hardware address
+I1 PosInt_Param   Default_Com_Irq[1]        Port 1 interrupt request line
+I2 PosInt_Param   Default_Com_Irq[2]        Port 2 interrupt request line
+I3 PosInt_Param   Default_Com_Irq[3]        Port 3 interrupt request line
+I4 PosInt_Param   Default_Com_Irq[4]        Port 4 interrupt request line
+V1 Hexi_Param     Default_Com_Int[1]        Port 1 interrupt vector
+V2 Hexi_Param     Default_Com_Int[2]        Port 2 interrupt vector
+V3 Hexi_Param     Default_Com_Int[3]        Port 3 interrupt vector
+V4 Hexi_Param     Default_Com_Int[4]        Port 4 interrupt vector
+T1 String_Param   User_Term_Name[1]         User terminal 1 definition file
+T2 String_Param   User_Term_Name[2]         User terminal 2 definition file
+T3 String_Param   User_Term_Name[3]         User terminal 3 definition file
+SB Color_Param    Status_BackGround_Color   Status line background color
+SA BColor_Param   Status_ForeGround_Color   Status line foreground color
+SR Boolean_Param  Reverse_Status_Colors     Reverse standard colors for status line
+CA Color_Param    New_Menu_Text_Color_2     Secondary menu text color
+CC Color_Param    New_Menu_Title_Color      Secondary menu title color
+VC Boolean_Param  Auto_Change_Arrows        Do VT100 applic./numeric keypad switch
+SH Boolean_Param  Auto_Strip_High_Bit       Strip high bit in terminal mode
+ZB PosInt_Param   Zmodem_BlockSize          Block length for Zmodem transfers
+FN FileN_Param    FileName                  File name for transfer
+FH PosInt_Param   FK_Delay_Time             Function key intercharacter delay (ms)
+SZ Boolean_Param  Software_Scroll_Par       Use software scrolling
+UP Boolean_Param  Use_Prev_Key_Text         Show previous command in command line mode
+TU Boolean_Param  Send_Upper_Case_Only      Translate keyboard input to upper case
+KX PosInt_Param   Kermit_Extended_Block     Maximum long block size
+T4 String_Param   User_Term_Name[4]         User terminal 4 definition file
+T5 String_Param   User_Term_Name[5]         User terminal 5 definition file
+HP Host_Param     Privilege                 Host mode privilege
+AW Boolean_Param  ATI_Ega_Wonder            ATI EGA Wonder/ATI VIP VGA (TM) card installed
+YX Boolean_Param  Honor_XOff_Ymodem         Honor XON/XOFF in Ymodem sends
+NL Boolean_Param  New_Line_Param            Add line feeds to outgoing CRs
+WH PosInt_Param   Window_Hold_Time          Time to hold window displays (1/10 secs)
+01 Menu_Param                               Serial port hardware settings
+02 Ascii_Param                              Ascii transfer parameters
+03 Xmodem_Param                             Xmodem/Ymodem transfer parameters
+04 ExtTrans_Param                           External protocol definitions
+05 VT100_Param                              VT100 settings
+06 Key_Param      Command_Key_Name          Command mode key
+07 Boolean_Param  Use_Military              Use 24 hour time format
+08 String_Param   Date_Format_String        Date format
+09 String_Param   Script_Order_String       Script search order
+10 Boolean_Param  Ascii_CRLF                Send CR/LF sequence at end of line
+11 Menu_Param                               Backspace key sends BS, <CTRL>BS sends DEL
+12 Menu_Param                               Backspace key sends DEL, <CTRL>BS sends BS
+EG Boolean_Param  Allow_EGA_Graphics        Allow EGA graphics mode
+ML Boolean_Param  Modem_Hold_Line           Hold line after abortive dial
+VK String_Param   KeyPad_Appl_On_File       Key file for VT100 applic. mode
+VN String_Param   KeyPad_Appl_Off_File      Key file for VT100 numeric mode
+YF Boolean_Param  Use_Full_Path_Name        Send/receive full path name in Ymodem
+KK Boolean_Param  Kermit_AutoDownload       Allow Kermit autodownload
+ZA Boolean_Param  Zmodem_AutoDownload       Allow Zmodem autodownload

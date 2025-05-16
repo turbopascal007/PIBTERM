@@ -1,0 +1,1267 @@
+(*----------------------------------------------------------------------*)
+(*                 Global variables for file transfers                  *)
+(*----------------------------------------------------------------------*)
+
+CONST
+                   (* Special characters used in XMODEM *)
+
+   SOH   = $01;                    (* Start of XMODEM block       *)
+   STX   = $02;                    (* Start of Ymodem block       *)
+   EOT   = $04;                    (* End of XMODEM transmission  *)
+   ACK   = $06;                    (* Acknowledge an XMODEM block *)
+   NAK   = $15;                    (* Refuse an XMODEM block      *)
+   SYN   = $16;                    (* Start of Telink header      *)
+   CAN   = $18;                    (* Cancel XMODEM transfer      *)
+
+CONST
+   MaxSectorLength         = 5000  (* Length of sector data storage *);
+   MaxFileHandleBuffer     = 2048  (* Length of file handle buffer  *);
+
+TYPE
+   Sector_Type             = ARRAY[ 1 .. MaxSectorLength     ] OF BYTE;
+   File_Handle_Buffer_Type = ARRAY[ 1 .. MaxFileHandleBuffer ] OF BYTE;
+   File_Handle_Buffer_Ptr  = ^File_Handle_Buffer_Type;
+
+VAR
+   Sector_Size      : INTEGER      (* Size of Xmodem sector             *);
+
+                                   (* One sector of data                *)
+   Sector_Data      : Sector_Type;
+
+(* VAR *) CONST
+   Sector_Number    : INTEGER      (* Current sector number being sent  *)
+                      = 0;
+
+   Max_Write_Buffer : INTEGER      (* File transfer buffer size         *)
+                      = 2048;
+
+                   (* Transfer Declarations *)
+TYPE
+   Transfer_Type = ( Ascii, Xmodem_Chk, Xmodem_CRC, Kermit, Telink,
+                     Modem7_Chk, Modem7_CRC, Xmodem_1K, Xmodem_1KG,
+                     Ymodem_Batch, Ymodem_G,
+                     PUser1, PUser2, PUser3, PUser4, PUser5,
+                     PUser6, PUser7, PUser8, PUser9, PUser10,
+                     None );
+
+CONST
+   Max_Transfer_Types = 22;
+
+(* VAR *) CONST
+                                   (* Vector of available transfer types *)
+
+   Transfers            : ARRAY[ 1 .. Max_Transfer_Types ] OF Transfer_Type
+                          = ( Ascii, Xmodem_Chk, Xmodem_Crc, Kermit, Telink,
+                              Modem7_Chk, Modem7_CRC, Xmodem_1K,  Xmodem_1KG,
+                              Ymodem_Batch, Ymodem_G,
+                              PUser1, PUser2, PUser3, PUser4, PUser5,
+                              PUser6, PUser7, PUser8, PUser9, PUser10,
+                              None );
+
+                                   (* Vector of long transfer type names *)
+
+   Transfer_Name_List   : ARRAY[ 1 .. Max_Transfer_Types ] OF String12
+                          = ( '       Ascii', '  Xmodem Chk', '  Xmodem CRC',
+                              '      Kermit', '      Telink', '  Modem7 Chk',
+                              '  Modem7 CRC', '   Xmodem 1K', '  Xmodem 1Kg',
+                              'Ymodem Batch', '    Ymodem g', '            ',
+                              '            ', '            ', '            ',
+                              '            ', '            ', '            ',
+                              '            ', '            ', '            ',
+                              '        None' );
+
+                                   (* Vector of short transfer type names *)
+
+   Trans_Type_Name      : ARRAY[ Transfer_Type ] OF Char_2 =
+                          ( 'AS', 'XK', 'XC', 'KE', 'TE', 'MK', 'M7',
+                            'X1', 'XG', 'YB', 'YG', '  ', '  ', '  ',
+                            '  ', '  ', '  ', '  ', '  ', '  ', '  ',
+                            'NO' );
+
+                                   (* If protocol OK for use in host mode *)
+
+   Trans_OK_In_Host     : ARRAY[ Transfer_Type ] OF BOOLEAN
+                          = ( TRUE,   TRUE,   TRUE,   TRUE,   TRUE,
+                              TRUE,   TRUE,   TRUE,   TRUE,   TRUE,
+                              TRUE,   TRUE,   TRUE,   TRUE,   TRUE,
+                              TRUE,   TRUE,   TRUE,   TRUE,   TRUE,
+                              TRUE,   TRUE    );
+
+                                   (* Non-batch protocols *)
+
+   Single_File_Protocol : ARRAY[Transfer_Type] OF BOOLEAN
+                          = ( TRUE,   TRUE,   TRUE,   FALSE,  FALSE,
+                              FALSE,  FALSE,  TRUE,   TRUE,   FALSE,
+                              FALSE,  TRUE,   TRUE,   TRUE,   TRUE,
+                              TRUE,   TRUE,   TRUE,   TRUE,   TRUE,
+                              TRUE,   TRUE    );
+
+                                   (* Script names for external handlers *)
+
+   Receive_Script_Names : ARRAY[ Transfer_Type ] OF String12
+                          = ( '', '', '', '', '', '', '', '', '', '', '',
+                              '', '', '', '', '', '', '', '', '', '', '' );
+
+   Send_Script_Names    : ARRAY[ Transfer_Type ] OF String12
+                          = ( '', '', '', '', '', '', '', '', '', '', '',
+                              '', '', '', '', '', '', '', '', '', '', '' );
+
+   External_Trans_Def   : ARRAY[ 1 .. 10 ] OF String80
+                          = ( '', '', '', '', '', '', '', '', '', '' );
+
+                   (* File for Xmodem family transfers *)
+VAR
+   FileName            : AnyStr    (* Name of file                      *);
+   Saved_Kbd_File_Name : AnyStr    (* Saved keyboard line with filename *);
+   XFile               : FILE      (* Xmodem/Kermit file to transfer    *);
+
+                   (* Timing/Delay Constants and Variables *)
+CONST
+   One_Second     =  1             (* One second                       *);
+   Two_Seconds    =  2             (* Two seconds                      *);
+   Five_Seconds   =  5             (* Five seconds                     *);
+   Ten_Seconds    = 10             (* Ten seconds                      *);
+   Twenty_Seconds = 20             (* Twenty seconds                   *);
+   Sixty_Seconds  = 60             (* Sixty seconds                    *);
+   Trans_Time_Val = 1800.0         (* Fudge factor for transfer times  *);
+
+                   (* Ascii transfer definitions  *)
+
+(* VAR *) CONST
+   Ascii_Char_Delay  : INTEGER     (* Character delay for Ascii trans.  *)
+                       = 0;
+   Ascii_Line_Delay  : INTEGER     (* Line delay for Ascii transfers    *)
+                       = 0;
+   Ascii_CR_LF_String: STRING[2]   (* CR or CR+LF to end ASCII lines    *)
+                       = ^M;
+   Ascii_CRLF        : BOOLEAN     (* TRUE if CR+LF to end ASCII lines  *)
+                       = FALSE;
+   Ascii_Line_Size   : INTEGER     (* Line size for stream transfers    *)
+                       = 255;
+   Ascii_Use_CtrlZ   : BOOLEAN     (* TRUE if CtrlZ used as EOF marker  *)
+                       = FALSE;
+   Ascii_Show_Text   : BOOLEAN     (* TRUE to display text during trans.*)
+                       = TRUE;
+   Ascii_Send_Blank  : BOOLEAN     (* TRUE to send empty lines as blank *)
+                       = FALSE;
+   Ascii_Send_Asis   : BOOLEAN     (* TRUE to send text as is           *)
+                       = FALSE;
+   Ascii_Translate   : BOOLEAN     (* TRUE to use translate tab in down.*)
+                       = TRUE;
+   Ascii_Pacing_Char : CHAR        (* Pacing character for uploads      *)
+                       = #0;
+
+                   (* Save/restore transmission params during XMODEM *)
+
+VAR
+   Xmodem_Bits_Save  : INTEGER     (* Save # bits per character         *);
+   Xmodem_Parity_Save: CHAR        (* Save parity                       *);
+   Xmodem_Stop_Save  : INTEGER     (* Save stop bits                    *);
+
+(* VAR *) CONST
+   Xmodem_Char_Wait   : INTEGER    (* Character wait for Xmodem trans.  *)
+                        = 1;
+   Xmodem_Block_Wait  : INTEGER    (* Interblock wait for Xmodem trans. *)
+                        = 10;
+   Xmodem_Ack_Wait    : INTEGER    (* ACK wait time for Xmodem trans.   *)
+                        = 10;
+   Xmodem_Max_Errors  : INTEGER    (* Maximum errors in Xmodem          *)
+                        = 20;
+
+(* VAR *) CONST                    (* Default transfer type             *)
+
+   Default_Transfer_Type : Transfer_Type
+                           = Xmodem_CHK;
+
+   Stop_Receive      : BOOLEAN     (* TRUE to cancel receiving of file. *)
+                       = FALSE;
+   Stop_Send         : BOOLEAN     (* TRUE to cancel sending of file.   *)
+                       = FALSE;
+   Use_Time_Sent     : BOOLEAN     (* TRUE to stamp file with received  *)
+                                   (* time and date.                    *)
+                       = TRUE;
+   Null_File_Name    : BOOLEAN     (* TRUE if null file name in Ymodem  *)
+                       = FALSE;
+   Display_Status    : BOOLEAN     (* TRUE to display transfer status   *)
+                       = TRUE;
+   Downsize_Ymodem   : BOOLEAN     (* TRUE to allow downsize in Ymodem  *)
+                       = FALSE;
+   Script_Transfer   : BOOLEAN     (* TRUE if doing transfer in script  *)
+                       = FALSE;
+   GMT_Difference    : INTEGER     (* Difference in hours between local *)
+                                   (* time and Greenwich mean time      *)
+                       = 0;
+   Transfer_Bells    : INTEGER     (* Number of bells after transfer    *)
+                       = 6;
+   YTerm_Mode        : CHAR        (* YTERM transfer mode               *)
+                       = 'B';
+   Do_WXModem        : BOOLEAN     (* TRUE to do WXModem                *)
+                       = FALSE;
+   Do_SeaLink        : BOOLEAN     (* TRUE to do SeaLink                *)
+                       = FALSE;
+   Zmodem_BlockSize  : INTEGER     (* Length for Zmodem transfers       *)
+                       = 256;
+   Zmodem_Autodownload:BOOLEAN     (* Allow Zmodem autodownloads        *)
+                       = FALSE;
+   Use_Full_Path_Name: BOOLEAN     (* TRUE to use full path in Ymodem   *)
+                       = FALSE;
+
+{.C-}
+(*----------------------------------------------------------------------*)
+(*              Definitions for Kermit protocol transfers               *)
+(*----------------------------------------------------------------------*)
+
+CONST
+   MaxKermitWindowSize     = 31;
+   MaxLongPacketLength     = 1000;
+
+TYPE
+   Kermit_Packet_Buffer     = ARRAY[1..94] OF CHAR;
+   Kermit_Packet_Ptr        = ^Kermit_Packet_Buffer;
+
+   Kermit_State_Vars = ( Send_Init,      Send_File_Header,  Send_File,
+                         Send_EOF,       Send_Break,        Receive_Init,
+                         Receive_Header, Receive_File,      Send_Bye,
+                         Get_File );
+
+   Kermit_File_Param   = ( Kermit_Ascii, Kermit_Binary, Kermit_None );
+
+   Kermit_Packet_Param = ( Break_Pack,  Data_Pack, Error_Pack,
+                           Header_Pack, NAK_Pack,  Send_Pack, Reserved_Pack,
+                           ACK_Pack,    End_Pack,  Generic_Pack,
+                           Text_Pack,   Host_Pack, Attrib_Pack, Unknown );
+
+   Kermit_File_Modes   = ( Read_Open, Write_Open );
+
+   Kermit_Window_Type_Record = RECORD
+                                  Data_Slot   : INTEGER;
+                                  Data_Length : INTEGER;
+                                  ACK_Flag    : BOOLEAN;
+                                  Retry_Count : INTEGER;
+                               END;
+
+                                   (* Window packet queue       *)
+
+   Kermit_Window_Queue_Type = ARRAY[0..63] OF Kermit_Window_Type_Record;
+
+   Kermit_Abort_Type         = (No_Abort, One_File, All_Files, Entire_Protocol);
+
+(* VAR *) CONST
+   Kermit_Debug            : BOOLEAN  (* TRUE if Kermit debug mode *)
+                             = FALSE;
+                                   (* Type of file (Ascii, Binary) *)
+
+   Kermit_File_Type_Var    : Kermit_File_Param = Kermit_None;
+
+   Kermit_Init_Packet_Size : INTEGER  (* Initial max packet size *)
+                             = 90;
+
+   Kermit_Packet_Size      : INTEGER  (* Size of current packet *)
+                             = 90;
+
+   Kermit_Extended_Block   : INTEGER  (* Max size of long block *)
+                             = MaxLongPacketLength;
+
+   Kermit_Timeout          : INTEGER  (* Timeout value in seconds *)
+                             = 5;
+   Kermit_Npad             : INTEGER  (* Number of padding characters *)
+                             = 0;
+   Kermit_EOL              : CHAR     (* End of line character *)
+                             = ^M;
+   Kermit_Header_Char      : CHAR     (* Block header character *)
+                             = ^A;
+
+   Kermit_Pad_Char         : CHAR     (* Padding character *)
+                             = #0;
+   Kermit_Quote_Char       : CHAR     (* Control-quote character *)
+                             = '#';
+   Kermit_Quote_8_Char     : CHAR     (* 8-bit quoting character *)
+                             = '&';
+   Kermit_Chk_Type         : CHAR     (* Block-check type        *)
+                             = '3';
+   Kermit_Repeat_Char      : CHAR     (* Repeat character        *)
+                             = '~';
+   Kermit_Handshake_Char   : CHAR     (* Handshake character     *)
+                             = ' ';
+   Quoting                 : BOOLEAN    (* TRUE if 8th-bit quoting in effect *)
+                             = FALSE;
+   Repeating               : BOOLEAN    (* TRUE if repeating/compression in effect *)
+                             = FALSE;
+   My_Pad_Num              : INTEGER    (* Default number of padding characters *)
+                             = 0;
+   Kermit_Delay_Time       : INTEGER    (* Time to wait before send in host mode *)
+                             = 15;
+   Kermit_Window_Size      : INTEGER    (* No. of packets in window  *)
+                             = 16;
+   Kermit_Autodownload     : BOOLEAN    (* TRUE to allow Kermit autodownloads *)
+                             = FALSE;
+   Doing_Kermit_Autodown   : BOOLEAN    (* TRUE if doing Kermit autodownload *)
+                             = FALSE;
+
+VAR
+
+                                   (* Type of current Kermit packet *)
+
+   Kermit_Packet_Type   : Kermit_Packet_Param;
+
+                                   (* Current state of Kermit transfer *)
+
+   Kermit_State         : Kermit_State_Vars;
+
+                                   (* If remote kermit in server mode *)
+   Kermit_Remote_Server : BOOLEAN;
+
+
+   His_TimeOut          : INTEGER  (* Timeout desired by remote *);
+
+
+   Packet_OK          : BOOLEAN    (* TRUE if packet OK        *);
+   Ack_OK             : BOOLEAN    (* TRUE if packet ACK'd     *);
+   Open_OK            : BOOLEAN    (* TRUE if file to transfer opened OK *);
+   File_Done          : BOOLEAN    (* TRUE if file being sent done *);
+   Kermit_Abort       : BOOLEAN    (* TRUE if keyboard entry aborts transfer *);
+   Kermit_Retry       : BOOLEAN    (* TRUE to retry current packet *);
+   Kermit_Really_Done : BOOLEAN    (* TRUE if Kermit protocol done *);
+
+                                   (* Type of keyboard-originated abort *)
+
+   Kermit_Abort_Level : Kermit_Abort_Type;
+
+   Packet_Num         : INTEGER    (* Packet number being sent *);
+   Rec_Packet_Num     : INTEGER    (* Received packet number *);
+   Packets_Sent       : LONGINT    (* Number of packets sent *);
+   Packets_Received   : LONGINT    (* Number of packets received *);
+   Packets_Bad        : LONGINT    (* Number of errors in transfer *);
+
+   File_Open          : BOOLEAN    (* TRUE if file being transferred is open *);
+   Sending_File       : BOOLEAN    (* TRUE if uploading, FALSE if downloading *);
+   Logging_Out_Server : BOOLEAN    (* TRUE if logging out remote server       *);
+
+   My_Pad_Char        : CHAR       (* Default pad character *);
+   His_Quote_Char     : CHAR       (* Remote kermit's quote character *);
+   His_Quote_8_Char   : CHAR       (* Remote kermit's 8th-bit quote character *);
+   His_Chk_Type       : CHAR       (* Remote kermit's block check type *);
+   His_Repeat_Char    : CHAR       (* Remote kermit's repeat quote char *);
+
+   Send_EOL           : INTEGER    (* Send CR first time *);
+
+   File_Records       : LONGINT    (* Number of bytes in disk file *);
+   Buffer_Num         : LONGINT    (* How many characters read/written *);
+   Receive_Done       : BOOLEAN    (* TRUE if file reception complete *);
+   Kermit_MaxTry      : INTEGER    (* Maximum number of retries allowed *);
+   Rec_Packet_Length  : INTEGER    (* Received packet data length *);
+                                   (* Points to received data     *)
+   Rec_Packet_Ptr     : Kermit_Packet_Ptr;
+   Send_Packet_Length : INTEGER    (* Send packet data length *);
+                                   (* Points to data to send  *)
+   Send_Packet_Ptr    : Kermit_Packet_Ptr;
+
+   Kermit_Menu_Title  : AnyStr     (* Title for Kermit windows *);
+
+   Finish_Kermit_Server : BOOLEAN  (* TRUE to stop remote server *);
+
+   Kermit_Transfer_Start: LONGINT  (* Starting time of transfer *);
+   Kermit_Transfer_End  : LONGINT  (* Ending time of transfer   *);
+   Kermit_Transfer_Rate : REAL     (* Transfer rate in CPS      *);
+
+   Kermit_Window_Top    : BYTE     (* Top packet in window      *);
+   Kermit_Window_Bottom : BYTE     (* Bottom packet in window   *);
+
+                                   (* Window packet queue       *)
+
+   Kermit_Queue         : Kermit_Window_Queue_Type;
+
+(*----------------------------------------------------------------------*)
+(*                    Global script file variables                      *)
+(*----------------------------------------------------------------------*)
+
+CONST
+   Max_Script_File_Commands = 97       (* # of script commands              *);
+   MaxScripts               = 100      (* Maximum # of compiled scripts     *);
+   MaxScriptCalls           = 64       (* Maximum call depth within script  *);
+   MaxScriptVariables       = 100      (* Maximum variables each script     *);
+   MaxNestedScripts         = 10       (* Maximum nesting depth for scripts *);
+   MaxOperandTypes          = 13       (* Maximum # of script data types    *);
+   MaxWhenStrings           = 10       (* Maximum # of WHEN strings         *);
+   MaxWaitStrings           = 20       (* Maximum # of WAIT strings         *);
+   MaxScriptOpenFiles       = 10       (* Maximum # of open script files    *);
+   MaxNewCommands           = 100      (* Maximum # of new commands         *);
+   MaxScriptArgs            = 20       (* Maximum # of script arguments     *);
+
+TYPE
+   OperandType =    ( Bad_Operand_Type, Operator_Type, Integer_Variable_Type,
+                      Real_Variable_Type, String_Variable_Type,
+                      Char_Variable_Type,
+                      Integer_Constant_Type, Real_Constant_Type,
+                      String_Constant_Type,
+                      Char_Constant_Type,
+                      StackEnd_Type, Left_Paren_Type, Right_Paren_Type,
+                      Comma_Type );
+
+(* VAR *) CONST
+                                   (* Script conversion table       *)
+
+   PibTerm_Command_Table_2 : ARRAY[0..No_Of_PibTerm_Commands_Minus_One]
+                             OF PibTerm_Command_Type =
+      ( AddCommandSy,   AddLFSy,       AlarmSy,       AreaCodeSy,
+        BreakSy,        CallSy,        CaptureSy,     CaseSy,
+        ChDirSy,        ClearSy,       CloseSy,       ClrEolSy,
+        CommDrainSy,
+        CommFlushSy,    CopyFileSy,    DeclareSy,     DelaySy,
+        DelLineSy,      DialSy,        DirFirstSy,    DirNextSy,
+        DoCaseSy,       DosSy,         EchoSy,        EditSy,
+        EditFileSy,     ElseSy,        ElseIfSy,      EndCaseSy,
+        EndDoCaseSy,    EndForSy,      EndIfSy,       EndProcSy,
+        EndWhileSy,     EraseFileSy,   ExecuteSy,     ExeNewSy,
+        ExitSy,         ExitAllSy,     FastCSy,       FileSy,
+        ForSy,          FreeSpaceSy,   GetDirSy,      GetParamSy,
+        GetVarSy,       GossipSy,      GoToSy,        GoToXYSy,
+        HangUpSy,       HostSy,        IfConSy,       IfDialSy,
+        IfEofSy,        IfExistsSy,    IfFoundSy,     IfLocStrSy,
+        IfOkSy,         IfOpSy,        IfRemStrSy,    ImportSy,
+        InfoSy,         InputSy,       InsLineSy,     KeyDefSy,
+        KeyFlushSy,     KeySendSy,     KeySy,         LabelSy,
+        LogSy,          MenuSy,        MessageSy,     MuteSy,
+        OpenSy,         ParamSy,       PImportSy,     PrintFileSy,
+        ProcedureSy,    QuitSy,        QuitAllSy,     ReadSy,
+        ReadLnSy,       ReceiveSy,     ReDialSy,      RepeatSy,
+        ResetSy,        ReturnSy,      RInputSy,      ScriptSy,
+        SDumpSy,        SendSy,        SetSy,         SetParamSy,
+        SetVarSy,       STextSy,       SuspendSy,     TextSy,
+        TimersSy,       TranslateSy,   UntilSy,       ViewSy,
+        ViewFileSy,     WaitSy,        WaitCountSy,   WaitListSy,
+        WaitQuietSy,    WaitStrSy,     WaitTimeSy,    WhenSy,
+        WhenDropSy,     WhenListSy,    WhereXYSy,     WhileSy,
+        WriteSy,        WriteLnSy,     WriteLogSy,    ZapVarSy,
+        Bad_Command,    Null_Command
+      );
+
+TYPE
+                                   (* Generic buffer type to hold script *)
+                                   
+   Script_Buffer_Type = ARRAY[1..1] OF BYTE;
+   
+                                   (* For pointing to start of script    *)
+                                   
+   Script_Buffer_Ptr  = ^Script_Buffer_Type;
+   
+                                   (* Script variable definition *)
+
+   Script_Variable_Record   = RECORD
+                                 Var_Name   : String10;
+                                 Var_Type   : OperandType;
+                                 Var_Passed : BOOLEAN;
+                                 Var_Temp   : BOOLEAN;
+                                 Var_Value  : StringPtr;
+                              END;
+
+   Script_Variable_Record_Ptr = ^Script_Variable_Record;
+
+                                   (* Saves variables across CALLs *)
+
+   Script_Save_Variable_Record_Ptr = ^Script_Save_Variable_Record;
+   
+   Script_Save_Variable_Record = RECORD
+                                    Save_Data : Script_Variable_Record_Ptr;
+                                    Prev_Var  : Script_Save_Variable_Record_Ptr;
+                                 END;
+                                 
+                                   (* Script variable list *)
+                                   
+   Script_Variable_List     = ARRAY[0..MaxScriptVariables] OF Script_Variable_Record;
+   Script_Variable_List_Ptr = ^Script_Variable_List;
+
+                                   (* Holds variable indices of parameters *)
+
+   Script_Parameter_Vector = ARRAY[1..MaxScriptArgs] OF INTEGER;
+   Script_Parameter_Ptr    = ^Script_Parameter_Vector;
+
+                                   (* Defines a script record *)
+   Script_Record_Type = RECORD
+                           Script_Name         : STRING[8];
+                           Script_Ptr          : Script_Buffer_Ptr;
+                           Script_Len          : INTEGER;
+                           Script_Vars_Count   : INTEGER;
+                           Script_Vars         : Script_Variable_List_Ptr;
+                           Script_Params_Count : INTEGER;
+                           Script_Params       : Script_Parameter_Ptr;
+                        END;
+
+                                   (* Saves stack of EXECUTEd scripts *)
+   Script_Buffer_Save = RECORD
+                           Script_Num  : INTEGER;
+                           Buffer_Pos  : INTEGER;
+                           Buffer_Ptr  : Script_Buffer_Ptr;
+                           Vars_Ptr    : Script_Variable_List_Ptr;
+                           Vars_Count  : INTEGER;
+                           Prev_Ptr    : Script_Variable_List_Ptr;
+                           Params_Ptr  : Script_Parameter_Ptr;
+                           Params_Count: INTEGER;
+                           Params_Got  : INTEGER;
+                        END;
+                                   (* Saves stack of CALLed scripts *)
+
+   Script_Call_Stack_Type = RECORD
+                               Proc_Param  : Script_Parameter_Ptr;
+                               Proc_Got    : INTEGER;
+                               Proc_Count  : INTEGER;
+                               Return_Addr : INTEGER;
+                               Save_Vars   : Script_Save_Variable_Record_Ptr;
+                            END;
+
+                                   (* Search order for scripts *)
+
+   Script_Search_Order_Type = ( Dir_Then_Lib, Lib_Then_Dir, Dir_Only, Lib_Only );
+
+
+                                   (* Stack entry for script execution *)
+   Stack_Entry = RECORD
+                    TypVal : OperandType;
+                    IntVal : LONGINT;
+                    StrVal : AnyStr;
+                 END;
+
+   Stack_Entry_Ptr = ^Stack_Entry;
+
+   Script_When_Record = RECORD
+                           When_Found: BOOLEAN;
+                           When_Text : StringPtr;
+                           Reply_Text: StringPtr;
+                        END;
+
+   Script_Wait_Record = RECORD
+                           Wait_Text : StringPtr;
+                           Wait_Reply: StringPtr;
+                        END;
+
+   Script_File_Record = RECORD
+                           ReadOnly : BOOLEAN;
+                           Opened   : BOOLEAN;
+                           EOF_Seen : BOOLEAN;
+                           F        : Text_File;
+                        END;
+
+   Script_File_Record_Ptr  = ^Script_File_Record;
+
+
+(* VAR *) CONST
+                                   (* Index of currently executing script *)
+   Current_Script_Num     : INTEGER = 0;
+
+                                   (* WHEN text to wait for *)
+   Script_When_Text       : AnyStr = '';
+
+                                   (* Response text for WHEN *)
+   Script_When_Reply_Text : AnyStr = '';
+
+                                   (* Response text for WHENDROP *)
+   Script_When_Drop_Text  : AnyStr = '';
+
+                                   (* Current input for WHEN checking *)
+   Script_When_Save       : AnyStr = '';
+
+                                   (* Current input for WAITSTRING checking *)
+   Script_Wait_Save       : AnyStr = '';
+
+                                   (* # of characters to wait for *)
+   Script_Wait_Char_Count : INTEGER = 0;
+
+                                   (* # of 1/100 secs to wait quiet *)
+   Script_WaitQuiet_Time  : LONGINT = 0;
+
+                                   (* Time to wait for input string     *)
+   Script_Wait_Time       : LONGINT = 0;
+
+                                   (* Default time to wait for input string *)
+
+   Script_Default_Wait_Time : LONGINT = 30;
+
+                                   (* Starting time of day for wait         *)
+   Script_Wait_Start      : LONGINT = 0;
+
+                                   (* Where to go to if wait string fails   *)
+   Script_Wait_Failure    : LONGINT = 0;
+
+                                   (* Wait string appeared                  *)
+   Script_Wait_Found      : BOOLEAN = FALSE;
+
+                                   (* Size of script buffer                 *)
+
+   Script_Buffer_Size     : INTEGER = 0;
+
+                                   (* Pointer to compiled script text       *)
+
+   Script_Buffer          : Script_Buffer_Ptr = NIL;
+
+                                   (* Current position in script buffer     *)
+
+   Script_Buffer_Pos      : INTEGER = 0;
+
+                                   (* Script integer values             *)
+
+   Script_Integer_1       : LONGINT = 0;
+   Script_Integer_2       : LONGINT = 0;
+   Script_Integer_3       : LONGINT = 0;
+   Script_Integer_4       : LONGINT = 0;
+   Script_Integer_5       : LONGINT = 0;
+
+                                   (* Script text values                *)
+
+   Script_String          : AnyStr = '';
+   Script_String_2        : AnyStr = '';
+   Script_String_3        : AnyStr = '';
+   Script_String_4        : AnyStr = '';
+
+                                   (* Reply to Script INPUT prompt      *)
+   Script_Reply           : AnyStr = '';
+
+                                   (* Reply was OK                      *)
+   Script_Reply_Found     : BOOLEAN = FALSE;
+
+                                   (* Script suspend time period        *)
+   Script_Suspend_Time    : LONGINT = 0;
+
+                                   (* Script suspend starting time      *)
+   Script_Suspend_Start   : LONGINT = 0;
+
+                                   (* Reply to Script RINPUT prompt     *)
+   Script_Remote_Reply    : AnyStr = '';
+
+                                   (* Reply was OK                      *)
+   Script_Remote_Reply_OK : BOOLEAN = FALSE;
+
+                                   (* Marker for parameter substitution *)
+   Script_Parameter_Marker: CHAR = '%';
+
+                                   (* Scripts compiled and loaded       *)
+VAR
+   Scripts                : ARRAY[1..MaxScripts] OF Script_Record_Type;
+
+                                   (* Number of compiled scripts        *)
+(* VAR *) CONST
+   Script_Count           : 0..MaxScripts = 0;
+
+                                   (* Script variables                  *)
+
+   Script_Variables       : Script_Variable_List_Ptr = NIL;
+
+                                   (* Number of script variables active *)
+
+   Script_Variable_Count  : 0..MaxScriptVariables = 2;
+
+                                   (* Script parameter variables        *)
+
+   Script_Parameters      : Script_Parameter_Ptr = NIL;
+
+                                   (* Number of script parameters active *)
+
+   Script_Parameter_Count : 0..MaxScriptVariables = 0;
+   Script_Parameter_Got   : 0..MaxScriptVariables = 0;
+
+                                   (* Previous script's variables *)
+
+   Prev_Script_Variables  : Script_Variable_List_Ptr = NIL;
+
+                                   (* Save positions in nested scripts  *)
+VAR
+   Script_Stack_Position  : ARRAY[0..MaxNestedScripts] OF Script_Buffer_Save;
+
+(* VAR *) CONST
+   Script_Stack_Depth     : 0..MaxNestedScripts = 0;
+
+                                   (* Save positions in script procedures *)
+VAR
+   Script_Call_Stack     : ARRAY[0..MaxScriptCalls] OF Script_Call_Stack_Type;
+
+(* VAR *) CONST
+   Script_Call_Depth     : 0..MaxScriptCalls = 0;
+
+                                   (* Procedure parameter variables *)
+(* VAR *) CONST
+   Proc_Parameters       : Script_Parameter_Ptr = NIL;
+
+                                   (* Number of script parameters active *)
+
+   Proc_Parameter_Count  : 0..MaxScriptVariables = 0;
+   Proc_Parameter_Got    : 0..MaxScriptVariables = 0;
+
+                                   (* Learn variables *)
+(* VAR *) CONST
+   Script_Learn_Buffer_Size : INTEGER (* Learning buffer size *)
+                              = 15;
+   Script_Learn_Lines       : INTEGER (* Max. # of successive WaitStrings *)
+                              = 1;
+   Script_Learn_Line_Count  : INTEGER (* Count of WaitStrings generated   *)
+                              = 0;
+   Script_Wait_Generated    : BOOLEAN (* TRUE if WaitString generated     *)
+                              = FALSE;
+
+(* VAR *) CONST
+                                   (* Search order type *)
+
+   Script_Search_Order      : Script_Search_Order_Type
+                              = Dir_Then_Lib;
+
+   Script_Order_String      : ShortStr
+                              = 'Directory then library';
+
+                                   (* Vector of WHEN strings *)
+VAR
+   Script_When_List         : ARRAY[1..MaxWhenStrings] OF Script_When_Record;
+
+(* VAR *) CONST
+   Script_When_Count        : 0..MaxWhenStrings = 0;
+
+                                   (* Vector of WAIT strings *)
+VAR
+   Script_Wait_List         : ARRAY[1..MaxWaitStrings] OF Script_Wait_Record;
+
+                                   (* # of active waitstrings *)
+(* VAR *) CONST
+   Script_Wait_Count        : 0..MaxWaitStrings = 0;
+
+                                   (* Variable to receive wait index *)
+
+   Script_Wait_Result_Index : LONGINT = 0;
+
+                                   (* # chars to save for wait check *)
+
+   Script_Wait_Check_Length : INTEGER = 0;
+
+                                   (* Vector of files for use in scripts *)
+VAR
+   Script_File_List         : ARRAY[0..MaxScriptOpenFiles] OF Script_File_Record_Ptr;
+
+                                   (* If given file used in script *)
+
+   Script_File_Used         : ARRAY[0..MaxScriptOpenFiles] OF BOOLEAN;
+
+                                   (* # of files opened in script *)
+
+(* VAR *) CONST
+   Script_File_Count        : 0..MaxScriptOpenFiles = 0;
+
+   Script_IO_Error          : INTEGER    (* I/O error in script *)
+                              = 0;
+
+                                   (* User-defined commands *)
+VAR
+   Script_New_Commands      : ARRAY[1..MaxNewCommands] OF STRING[8];
+
+(* VAR *) CONST
+   Script_New_Command_Count : 0 .. MaxNewCommands = 0;
+
+(* VAR *) CONST
+                                   (* TRUE if executing command key script *)
+
+   Script_Command_Key_Mode  : BOOLEAN = FALSE;
+
+VAR
+   Script_Search_Rec        : SearchRec (* Search record for DirFirst, DirNext *);
+
+(*----------------------------------------------------------------------*)
+(*                    Command line mode variables                       *)
+(*----------------------------------------------------------------------*)
+
+(* VAR *) CONST
+   Command_Key      : INTEGER      (* Function which invokes command  *)
+                      = 0;
+   Command_Key_Name : STRING[20]   (* Command key name                *)
+                      = '';
+   Command_Key_Text : AnyStr       (* Text of command line            *)
+                      = '';
+   Use_Prev_Key_Text: BOOLEAN      (* TRUE to use prev. text to start *)
+                      = FALSE;
+
+(*----------------------------------------------------------------------*)
+(*                 Global error return from DOS                         *)
+(*----------------------------------------------------------------------*)
+
+VAR
+   Ierr : INTEGER                  (* DOS return error *);
+   
+(*----------------------------------------------------------------------*)
+(*                 Global screen positioning for autodownloads          *)
+(*----------------------------------------------------------------------*)
+
+VAR
+   NewX  : INTEGER;
+   OldX  : INTEGER;
+   NewY  : INTEGER;
+   OldY  : INTEGER;
+   
+(*----------------------------------------------------------------------*)
+(*                    Gossip mode definitions screen                    *)
+(*----------------------------------------------------------------------*)
+
+(* VAR *) CONST
+   Gossip_Window_Size : INTEGER    (* Number of lines in top window *)
+                        = 18;
+   Gossip_Line_Mode   : BOOLEAN    (* TRUE if line-edit GOSSIP mode *)
+                        = FALSE;
+
+(*----------------------------------------------------------------------*)
+(*                           Session timers                             *)
+(*----------------------------------------------------------------------*)
+
+VAR
+   Session_Start_Time: LONGINT     (* Starting time of entire session *);
+   Dialing_Start_Time: LONGINT     (* Starting time current dialing   *);
+
+(*----------------------------------------------------------------------*)
+(*                   Global graphics positions                          *)
+(*----------------------------------------------------------------------*)
+
+VAR
+   Graphics_XPos: INTEGER;
+   Graphics_YPos: INTEGER;
+
+(*----------------------------------------------------------------------*)
+(*                                                                      *)
+(*                  COMMUNICATIONS HARDWARE ADDRESSES                   *)
+(*                                                                      *)
+(*        These are specific to IBM PCs and close compatibles.          *)
+(*                                                                      *)
+(*----------------------------------------------------------------------*)
+
+CONST
+
+   UART_THR = $00;       (* offset from base of UART Registers for IBM PC *)
+   UART_RBR = $00;
+   UART_IER = $01;
+   UART_IIR = $02;
+   UART_LCR = $03;
+   UART_MCR = $04;
+   UART_LSR = $05;
+   UART_MSR = $06;
+
+   I8088_IMR = $21;      (* port address of the Interrupt Mask Register *)
+
+   COM1_Base = $03F8;    (* port addresses for the UART *)
+   COM2_Base = $02F8;
+   COM3_Base = $03E8;
+   COM4_Base = $02E8;
+
+   COM1_Irq = 4;         (* Interrupt line for the UART *)
+   COM2_Irq = 3;
+   COM3_Irq = 4;
+   COM4_Irq = 3;
+
+   COM1_Int = $0C;       (* Interrupt number for the UART *)
+   COM2_Int = $0B;
+   COM3_Int = $0C;
+   COM4_Int = $0B;
+
+   RS232_Base = $0400    (* Address of RS 232 com port pointer *);
+
+   MaxComPorts = 4       (* Four ports allowed by this code    *);
+
+(* STRUCTURED *) CONST
+                                   (* Port addresses of each com port *)
+
+   Default_Com_Base : ARRAY[1..MaxComPorts] OF WORD =
+                      ( COM1_Base, COM2_Base, COM3_Base, COM4_Base );
+
+                                   (* IRQ line for each port *)
+
+   Default_Com_Irq  : ARRAY[1..MaxComPorts] OF INTEGER =
+                      ( COM1_Irq, COM2_Irq, COM3_Irq, COM4_Irq );
+
+                                   (* Interrupt for each port *)
+
+   Default_Com_Int  : ARRAY[1..MaxComPorts] OF INTEGER =
+                      ( COM1_Int, COM2_Int, COM3_Int, COM4_Int );
+
+(*----------------------------------------------------------------------*)
+(*                                                                      *)
+(*                   COMMUNICATIONS BUFFER VARIABLES                    *)
+(*                                                                      *)
+(*     The communications buffers are implemented as circular (ring)    *)
+(*     buffers, or double-ended queues.  The asynchronous I/O routines  *)
+(*     enter characters in the receive buffer as they arrive at the     *)
+(*     serial port.  Higher-level routines may extract characters from  *)
+(*     the receive buffer at leisure.  Higher-level routines insert     *)
+(*     characters into the send buffer.  The asynchronous I/O routines  *)
+(*     then send characters out the serial port when possible.          *)
+(*                                                                      *)
+(*----------------------------------------------------------------------*)
+
+CONST
+
+   TimeOut             = 256        (* TimeOut value                   *);
+   Async_XON           = ^Q         (* XON character                   *);
+   Async_XOFF          = ^S         (* XOFF character                  *);
+
+   Async_Overrun_Error = 2          (*   overrun                       *);
+   Async_Parity_Error  = 4          (*   parity error                  *);
+   Async_Framing_Error = 8          (*   framing error                 *);
+   Async_Break_Found   = 16         (*   break interrupt               *);
+
+   Async_CTS           = $10        (*   Clear to send                 *);
+   Async_RTS           = $20        (*   Request to send               *);
+
+   Async_DSR           = $20        (*   Data set ready                *);
+   Async_DTR           = $10        (*   Data terminal ready           *);
+
+   Async_RTSDTR        = $30        (*   RTS + DTR                     *);
+   
+TYPE
+                                    (* I/O buffer type for serial port *)
+
+   Async_Buffer_Type   = ARRAY[0..1] OF CHAR;
+   Async_Ptr           = ^Async_Buffer_Type;
+
+
+VAR                                 (* Port addresses for serial ports *)
+
+   Com_Base               : ARRAY[1..MaxComPorts] OF WORD;
+
+                                    (* IRQ line for each serial port   *)
+
+   Com_Irq                : ARRAY[1..MaxComPorts] OF INTEGER;
+
+                                    (* Interrupt for each serial port   *)
+
+   Com_Int                : ARRAY[1..MaxComPorts] OF INTEGER;
+
+VAR
+   Async_Buffer_Ptr       : Async_Ptr  (* Input buffer address  *);
+   Async_OBuffer_Ptr      : Async_Ptr  (* Output buffer address *);
+
+   Async_Open_Flag        : BOOLEAN    (* true if port opened               *);
+   Async_Port             : INTEGER    (* current open port number (1 -- 4) *);
+   Async_Base             : INTEGER    (* base for current open port        *);
+   Async_Irq              : INTEGER    (* IRQ for current open port         *);
+   Async_Int              : INTEGER    (* Interrupt # for current port      *);
+   Async_RS232            : INTEGER    (* RS232 address for current port    *);
+
+   Async_Buffer_Overflow  : BOOLEAN    (* True if buffer overflow has happened *);
+   Async_Buffer_Used      : INTEGER    (* Amount of input buffer used so far   *);
+   Async_MaxBufferUsed    : INTEGER    (* Maximum amount of input buffer used  *);
+
+                                       (* Async_Buffer empty if Head = Tail    *)
+   Async_Buffer_Head      : INTEGER    (* Loc in Async_Buffer to put next char *);
+   Async_Buffer_Tail      : INTEGER    (* Loc in Async_Buffer to get next char *);
+   Async_Buffer_NewTail   : INTEGER    (* For updating tail value              *);
+
+   Async_OBuffer_Overflow : BOOLEAN    (* True if buffer overflow has happened *);
+   Async_OBuffer_Used     : INTEGER    (* Amount of output buffer used         *);
+   Async_MaxOBufferUsed   : INTEGER    (* Max amount of output buffer used     *);
+
+                                       (* Async_Buffer empty if Head = Tail    *)
+   Async_OBuffer_Head     : INTEGER    (* Loc in Async_Buffer to put next char *);
+   Async_OBuffer_Tail     : INTEGER    (* Loc in Async_Buffer to get next char *);
+   Async_OBuffer_NewTail  : INTEGER    (* For updating tail value              *);
+
+   Async_Buffer_Low       : INTEGER    (* Low point in receive buffer for XON  *);
+   Async_Buffer_High      : INTEGER    (* High point in receive buffer for XOFF*);
+   Async_Buffer_High_2    : INTEGER    (* Emergency point for XOFF             *);
+
+   Async_XOFF_Sent        : BOOLEAN    (* If XOFF sent                      *);
+   Async_Sender_On        : BOOLEAN    (* If sender is enabled              *);
+   Async_Send_XOFF        : BOOLEAN    (* TRUE to send XOFF ASAP            *);
+   Async_XOFF_Received    : BOOLEAN    (* If XOFF received                  *);
+   Async_XOFF_Rec_Display : BOOLEAN    (* If XOFF received and displayed    *);
+   Async_XON_Rec_Display  : BOOLEAN    (* If XON received                   *);
+   Async_Baud_Rate        : WORD       (* Current baud rate                 *);
+
+                                    (* Save previous serial interrupt status *)
+   Async_Save_IAddr       : POINTER;
+   Async_Do_CTS           : BOOLEAN (* TRUE to do clear-to-send checking    *);
+   Async_Do_DSR           : BOOLEAN (* TRUE to do data-set-ready checking   *);
+   Async_Do_XonXoff       : BOOLEAN (* TRUE to do XON/XOFF flow checking    *);
+   Async_OV_XonXoff       : BOOLEAN (* TRUE to do XON/XOFF if buffer overfl *);
+   Async_Hard_Wired_On    : BOOLEAN (* TRUE if hard-wired connection        *);
+   Async_Break_Length     : INTEGER (* Length of break in 1/10 seconds      *);
+   Async_Line_Status      : BYTE    (* Line Status Reg at interrupt         *);
+   Async_Modem_Status     : BYTE    (* Modem Status Reg at interrupt        *);
+   Async_Line_Error_Flags : BYTE    (* Line status bits accumulated         *);
+   Async_Buffer_Size      : INTEGER (* Stores input buffer size             *);
+   Async_OBuffer_Size     : INTEGER (* Stores output buffer size            *);
+   Async_Uart_IER         : INTEGER (* Interrupt enable register address    *);
+   Async_Uart_MCR         : INTEGER (* Interrupt enable register address    *);
+   Async_Uart_IIR         : INTEGER (* Interrupt ID register address        *);
+   Async_Uart_MSR         : INTEGER (* Modem status register address        *);
+   Async_Uart_LSR         : INTEGER (* Line status register address         *);
+   Async_Output_Delay     : INTEGER (* Delay in ms when output buffer full  *);
+   Async_OneMSDelay       : INTEGER (* Loop count value to effect 1 ms delay*);
+   Async_Buffer_Length    : INTEGER (* Receive buffer length                *);
+   Async_OBuffer_Length   : INTEGER (* Send buffer length                   *);
+                                    (* Pointer to Async_Send routine        *)
+   Async_Send_Addr        : Async_Ptr;
+
+(*----------------------------------------------------------------------*)
+(*          Definitions for screen memory reading/writing               *)
+(*----------------------------------------------------------------------*)
+
+CONST
+   EGA_Screen_Address      = $A000    (* Address of EGA color screen      *);
+   Color_Screen_Address    = $B800    (* Address of color screen          *);
+   Mono_Screen_Address     = $B000    (* Address of mono screen           *);
+   Screen_Length           = 4000     (* 80 x 25 x 2 = screen area length *);
+   Graphics_Screen_Length  = 16000    (* Length of graphics screen area   *);
+   EGA_Graphics_Scr_Length = 28000    (* Length of EGA graphics screen    *);
+   Max_Saved_Screen        = 6        (* Maximum no. of saved screens     *);
+   MedRes_GraphMode        = 4        (* Medium resolution graphics       *);
+   HiRes_GraphMode         = 6        (* High resolution graphics mode    *);
+   Mono_TextMode           = 7        (* Monochrome adapter text mode     *);
+   EGA_GraphMode           = 16       (* EGA adapter graphics mode        *);
+   CRT_Index               = $03D4    (* CRT index register               *);
+   CRT_Data                = $03D5    (* CRT data register                *);
+   CRT_Mode                = $03D8    (* CRT mode register                *);
+   CRT_Color_Select        = $03D9    (* CRT color select register        *);
+   CRT_Status              = $03DA    (* CRT status port                  *);
+   CRT_Mode_Byte           = $0465    (* CRT mode byte                    *);
+
+TYPE
+                                     (* A screen image            *)
+
+   Screen_Type       = ARRAY[ 1 .. EGA_Graphics_Scr_Length ] OF BYTE;
+
+   Screen_Ptr        = ^Screen_Image_Type;
+
+   Screen_Image_Type = RECORD
+                          Screen_Image: Screen_Type;
+                       END;
+
+                                              (* Screen stack entries      *)
+   Saved_Screen_Ptr  = ^Saved_Screen_Type;
+
+   Saved_Screen_Type = RECORD
+                          Screen_Row    : INTEGER;
+                          Screen_Column : INTEGER;
+                          Screen_X1     : INTEGER;
+                          Screen_Y1     : INTEGER;
+                          Screen_X2     : INTEGER;
+                          Screen_Y2     : INTEGER;
+                          Window_X1     : INTEGER;
+                          Window_Y1     : INTEGER;
+                          Window_X2     : INTEGER;
+                          Window_Y2     : INTEGER;
+                          Screen_Size   : WORD;
+                          Video_Mode    : INTEGER;
+                          If_BIOS       : BOOLEAN;
+                          Screen_Image  : Screen_Type;
+                       END;
+
+CONST
+   Video_Interrupt  = $10          (* Video interrupt number     *);
+
+CONST                              (* Save previous video interrupt status. *)
+
+   Video_Save_Iaddr  : Pointer = Nil;
+
+   Video_Request     : INTEGER = 0     (* Current video request *);
+   Video_Fill        : INTEGER = 0     (* Fill attribute        *);
+   Video_Page        : BYTE    = 0     (* Text memory page      *);
+   Video_Mode        : BYTE    = 3     (* Current text mode     *);
+   Video_Screen_Addr : WORD    = $B800 (* Screen memory address *);
+
+(* VAR *) CONST
+   Max_Screen_Col       : INTEGER             (* PC's screen width         *)
+                          = 80;
+
+   Wrap_Screen_Col      : INTEGER             (* Column at which to wrap   *)
+                          = 80;
+
+   Max_Screen_Line      : INTEGER             (* PC's screen length        *)
+                          = 25;
+
+   New_Max_Screen_Col   : INTEGER             (* Width for param settings  *)
+                          = 80;
+
+   New_Max_Screen_Line  : INTEGER             (* Length for param settings *)
+                          = 25;
+
+   Font8x8Loaded        : BOOLEAN             (* TRUE if 8x8 font loaded   *)
+                          = FALSE;
+
+   Really_Save_EGA      : BOOLEAN             (* TRUE to save EGA memory   *)
+                          = TRUE;
+
+(* VAR *) CONST
+                                              (* Memory-mapped screen area *)
+   Actual_Screen        : Screen_Ptr = NIL;
+                                              (* Saves screen behind menus *)
+
+   Saved_Screen         : Saved_Screen_Ptr = NIL;
+
+                                              (* Stack of saved screens    *)
+
+   Saved_Screen_List    : ARRAY[ 1 .. Max_Saved_Screen ] OF Saved_Screen_Ptr
+                          = ( NIL, NIL, NIL, NIL, NIL, NIL );
+
+                                              (* Depth of saved screen stack *)
+   Current_Saved_Screen : 0 .. Max_Saved_Screen = 0;
+
+                                   (* Upper left corner of      *)
+                                   (* current TURBO window      *)
+(* VAR *) CONST
+   Upper_Left_Column  : INTEGER = 1;
+   Upper_Left_Row     : INTEGER = 1;
+
+                                   (* Lower right corner of     *)
+                                   (* current TURBO window      *)
+(* VAR *) CONST
+   Lower_Right_Column  : INTEGER = 80;
+   Lower_Right_Row     : INTEGER = 25;
+
+(* VAR *) CONST
+   Global_ForeGround_Color : INTEGER = White;
+   Global_BackGround_Color : INTEGER = Black;
+   Global_Border_Color     : INTEGER = Black;
+   Global_Text_Attribute   : INTEGER = White;
+
+(*----------------------------------------------------------------------*)
+(*                       Multitasker definitions                        *)
+(*----------------------------------------------------------------------*)
+
+TYPE
+   MultiTaskerType     = ( MultiTasker_None, DoubleDos, DesqView, TopView,
+                           MSWindows, APXCore, EZDosIt, Concurrent_DOS,
+                           TaskView, MultiLink, Other );
+
+VAR
+   TimeSharingActive   : BOOLEAN   (* TRUE if multitasker active        *);
+
+                                   (* Which multitasker active          *)
+   MultiTasker         : MultiTaskerType;
+
+   DesqView_Screen     : Screen_Ptr (* Alternate display buffer address *);
+   Graphics_Screen     : Screen_Ptr (* Graphics display buffer address  *);
+   
+(*----------------------------------------------------------------------*)
+(*                   Menu constants, types, and variables               *)
+(*----------------------------------------------------------------------*)
+
+CONST
+
+   Up_Arrow         = ^E;    (* move up in menu code   *)
+   Down_Arrow       = ^X;    (* move down in menu code *)
+   Left_Arrow       = ^S;    (* move up in menu code   *)
+   Right_Arrow      = ^D;    (* move down in menu code *)
+   Space_Bar        = #32;   (* space bar              *)
+   Ch_cr            = #13;   (* Carriage return *)
+   Ch_esc           = #27;   (* Escape *)
+   Ch_bell          = #07;   (* Bell *)
+   
+   Max_Menu_Items   = 21;    (* Maximum number of menu choices *)
+
+   Dont_Erase_Menu  = FALSE;
+   Erase_Menu       = TRUE;
+   
+TYPE
+
+   String40   = STRING[40]         (* Menu entry string type               *);
+
+   Menu_Entry = RECORD
+      Menu_Item_Text   : String40; (* Text of entry                        *)
+      Menu_Item_Row    : BYTE;     (* Row position of menu item            *)
+      Menu_Item_Column : BYTE;     (* Column position of menu item         *)
+   END;
+
+   Menu_Type = RECORD
+      Menu_Size     : 1 .. Max_Menu_Items;    (* No. of items in menu      *)
+      Menu_Title    : String80;               (* Menu title                *)
+      Menu_Row      : BYTE;                   (* Row position of menu      *)
+      Menu_Column   : BYTE;                   (* Column position of menu   *)
+      Menu_Width    : BYTE;                   (* Width of menu             *)
+      Menu_Height   : BYTE;                   (* Height of menu            *)
+      Menu_Default  : 1 .. Max_Menu_Items;    (* Default value position    *)
+      Menu_TColor   : BYTE;                   (* Foreground text color     *)
+      Menu_BColor   : BYTE;                   (* BackGround color          *)
+      Menu_FColor   : BYTE;                   (* Frame color               *)
+      Menu_HColor   : BYTE;                   (* Title color               *)
+                                              (* Menu items themselves     *)
+      Menu_Entries  : ARRAY[ 1 .. Max_Menu_Items ] Of Menu_Entry;
+   END;
+
+(* VAR *) CONST
+   Menu_Explode_Mode : BOOLEAN     (* TRUE to use exploding menus *)
+                       = FALSE;
+   Menu_Beep_Mode    : BOOLEAN     (* TRUE to beep on errors      *)
+                       = TRUE;
+   Menu_Depth        : INTEGER     (* Depth of current menus      *)
+                       = 0;
+
+VAR
+                                   (* Box-drawing characters for menus *)
+   Menu_Box_Chars : RECORD
+                       Top_Left_Corner     : CHAR;
+                       Top_Line            : CHAR;
+                       Top_Right_Corner    : CHAR;
+                       Right_Line          : CHAR;
+                       Bottom_Right_Corner : CHAR;
+                       Bottom_Line         : CHAR;
+                       Bottom_Left_Corner  : CHAR;
+                       Left_Line           : CHAR;
+                    END;
+
+                                   (* For MENU command *)
+   Script_Menu_Holder : ^Menu_Type;
+
+CONST
+   Access_Read_Mode           = 0;
+   Access_Write_Mode          = 1;
+   Access_Read_And_Write_Mode = 2;
+   
+   Attribute_None             = 0;
+   Attribute_Read_Only        = 1;
+   Attribute_Hidden           = 2;
+   Attribute_System           = 4;
+   Attribute_Volume_Label     = 8;
+   Attribute_Subdirectory     = 16;
+   Attribute_Archive          = 32;
+   
+VAR                                (* Easier addressing in INLINE *)
+   Global_Crc : INTEGER;
+
+VAR                                (* DOS error flag              *)
+   Err      : INTEGER;
+   ExitSave : Pointer              (* Exit procedure save area    *);
+
+VAR
+                                   (* Saves screen in batch transfers *)
+
+   Batch_Screen_Ptr   : Saved_Screen_Ptr;
+   Kermit_Local_Save  : Saved_Screen_Ptr (* Saves screen for Kermit  *);
+
+(*----------------------------------------------------------------------*)
+(*              Initialization/Parameter resetting variables            *)
+(*----------------------------------------------------------------------*)
+
+(* VAR *) CONST                    (* Hold new colors/video mode *)
+   New_Text_Mode          : INTEGER = BW80;
+   New_ForeGround_Color   : INTEGER = White;
+   New_BackGround_Color   : INTEGER = Black;
+   New_Menu_Text_Color    : INTEGER = White;
+   New_Menu_Title_Color   : INTEGER = White;
+   New_Menu_Frame_Color   : INTEGER = White;
+   New_Border_Color       : INTEGER = White;
+   New_Menu_Text_Color_2  : INTEGER = LightGray;
+   Review_Buffer_Length   : INTEGER = 0;
+   Last_Line_To_Set       : INTEGER = 0;
+   Kbd_Interrupt_Change   : BOOLEAN = FALSE;
+   Video_Interrupt_Change : BOOLEAN = FALSE;
+
+(*----------------------------------------------------------------------*)
+(*              Halt error codes                                        *)
+(*----------------------------------------------------------------------*)
+
+CONST
+   HeapTooSmall  = 202;
+   StackTooSmall = 203;
+   BadOverlay    = 1;
+   BadDosJump    = 2;
+   BadPort       = 3;
+   ErrorEnd      = 10;
+   
+(*----------------------------------------------------------------------*)
+(*              DOS Jump stuff                                          *)
+(*----------------------------------------------------------------------*)
+
+(* VAR *) CONST
+   HeapTop           : POINTER = NIL   (* Top of heap at program start       *);
+   StackSafetyMargin : WORD    = 1000  (* Safety margin for stack            *);
+   MinSpaceForDos    : WORD    = 20000 (* Minimum bytes for DOS shell to run *);
+

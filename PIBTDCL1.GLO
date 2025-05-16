@@ -1,0 +1,1269 @@
+(*----------------------------------------------------------------------*)
+(*                   GLOBAL VARIABLE DEFINITIONS                        *)
+(*----------------------------------------------------------------------*)
+
+CONST
+                   (* 8086/8088 hardware flags *)
+
+   Carry_Flag     = 1;
+   Parity_Flag    = 4;
+   Aux_Carry_Flag = 16;
+   Zero_Flag      = 64;
+   Sign_Flag      = 128;
+
+TYPE
+
+   AnyStr    = STRING[255]  (* Matches any string for parameter passing *);
+
+   StringPtr = ^AnyStr      (* Points to a string                       *);
+
+   ShortStr  = STRING[30]   (* Short string *);
+
+   String1   = STRING[1]    (* 1-character string  *);
+
+   String10  = STRING[10]   (* 10-character string *);
+
+   String12  = STRING[12]   (* 12-character string *);
+
+   FileStr   = STRING[65]   (* File name string *);
+
+   String80  = STRING[80]   (* 80-character string *);
+
+   Text_File = TEXT         (* General text file                 *);
+
+                                   (* Comparison types for string tests *)
+
+   Comparer       = ( Less, Equal, Greater );
+
+                                   (* Character set definitions *)
+   CharSet        = SET OF CHAR;
+
+(*----------------------------------------------------------------------*)
+(*               ASCII character set definitions                        *)
+(*----------------------------------------------------------------------*)
+
+CONST
+
+   NUL  = 0          (* NULL            *);
+   ETX  = 3          (* ETX = ^C        *);
+   ENQ  = 5          (* ENQ = Enquiry   *);
+   BELL = 7          (* BELL = bell     *);
+   BS   = 8          (* Backspace       *);
+   HT   = 9          (* Horizontal Tab  *);
+   LF   = 10         (* Line Feed       *);
+   VT   = 11         (* Vertical Tab    *);
+   FF   = 12         (* Form Feed       *);
+   CR   = 13         (* Carriage Return *);
+   SO   = 14         (* Start grahics   *);
+   SI   = 15         (* End graphics    *);
+   DLE  = 16         (* Data link esc.  *);
+   XON  = 17         (* XON             *);
+   XOFF = 19         (* XOFF            *);
+   SUB  = 26         (* End of file     *);
+   ESC  = 27         (* Escape          *);
+   FS   = 28         (* Graphics start  *);
+   GS   = 29         (* Graphics start  *);
+   RS   = 30         (* Inc. plot start *);
+   US   = 31         (* Graphics end    *);
+   SP   = 32         (* Space           *);
+   DEL  = 127        (* Delete          *);
+
+(*----------------------------------------------------------------------*)
+(*                    Copyright notice                                  *)
+(*----------------------------------------------------------------------*)
+
+(* STRUCTURED *) CONST
+   CopyRight_Notice : STRING[53] = 'Copyright (c) 1985,1986,1987,1988 by Philip R. Burns.';
+
+(*----------------------------------------------------------------------*)
+(*                    Program version                                   *)
+(*----------------------------------------------------------------------*)
+
+(* VAR *) CONST
+                                   (* Version no. of PibTerm   *)
+   PibTerm_Version : FileStr  = '';
+
+                                   (* Date of PibTerm *)
+   PibTerm_Date    : FileStr  = '';
+
+                                   (* If a test version        *)
+   Test_Version    : BOOLEAN = FALSE;
+
+(*----------------------------------------------------------------------*)
+(*                   PibTerm Command Types                              *)
+(*----------------------------------------------------------------------*)
+
+CONST
+   No_Of_PibTerm_Commands           = 119;
+   No_Of_PibTerm_Commands_Minus_One = 118;
+
+TYPE
+   PibTerm_Command_Type =
+      ( AddCommandSy,   AddLFSy,       AlarmSy,       AreaCodeSy,
+        BreakSy,        CallSy,        CaptureSy,     CaseSy,
+        ChDirSy,        ClearSy,       CloseSy,       ClrEolSy,
+        CommDrainSy,
+        CommFlushSy,    CopyFileSy,    DeclareSy,     DelaySy,
+        DelLineSy,      DialSy,        DirFirstSy,    DirNextSy,
+        DoCaseSy,       DosSy,         EchoSy,        EditSy,
+        EditFileSy,     ElseSy,        ElseIfSy,      EndCaseSy,
+        EndDoCaseSy,    EndForSy,      EndIfSy,       EndProcSy,
+        EndWhileSy,     EraseFileSy,   ExecuteSy,     ExeNewSy,
+        ExitSy,         ExitAllSy,     FastCSy,       FileSy,
+        ForSy,          FreeSpaceSy,   GetDirSy,      GetParamSy,
+        GetVarSy,       GossipSy,      GoToSy,        GoToXYSy,
+        HangUpSy,       HostSy,        IfConSy,       IfDialSy,
+        IfEofSy,        IfExistsSy,    IfFoundSy,     IfLocStrSy,
+        IfOkSy,         IfOpSy,        IfRemStrSy,    ImportSy,
+        InfoSy,         InputSy,       InsLineSy,     KeyDefSy,
+        KeyFlushSy,     KeySendSy,     KeySy,         LabelSy,
+        LogSy,          MenuSy,        MessageSy,     MuteSy,
+        OpenSy,         ParamSy,       PImportSy,     PrintFileSy,
+        ProcedureSy,    QuitSy,        QuitAllSy,     ReadSy,
+        ReadLnSy,       ReceiveSy,     ReDialSy,      RepeatSy,
+        ResetSy,        ReturnSy,      RInputSy,      ScriptSy,
+        SDumpSy,        SendSy,        SetSy,         SetParamSy,
+        SetVarSy,       STextSy,       SuspendSy,     TextSy,
+        TimersSy,       TranslateSy,   UntilSy,       ViewSy,
+        ViewFileSy,     WaitSy,        WaitCountSy,   WaitListSy,
+        WaitQuietSy,    WaitStrSy,     WaitTimeSy,    WhenSy,
+        WhenDropSy,     WhenListSy,    WhereXYSy,     WhileSy,
+        WriteSy,        WriteLnSy,     WriteLogSy,    ZapVarSy,
+        Bad_Command,    Null_Command
+      );
+
+                                   (* Command to be executed *)
+VAR
+   PibTerm_Command : PibTerm_Command_Type;
+
+                                   (* Conversion table from input to *)
+                                   (* commands.                      *)
+VAR
+   PibTerm_Command_Table : ARRAY[0..255] OF PibTerm_Command_Type;
+
+
+(*----------------------------------------------------------------------*)
+(*                Timing constants and variables                        *)
+(*----------------------------------------------------------------------*)
+
+TYPE
+   Date_Format_Type = ( MDY_Style, YMD_Style, DMY_Style );
+   Time_Format_Type = ( Military_Time, AMPM_Time        );
+
+CONST
+   Half_Second_Delay       =  500  (* Delay argument for 1/2 sec. delay *);
+   One_Second_Delay        = 1000  (* Delay argument for 1 second delay *);
+   Two_Second_Delay        = 2000  (* Delay argument for 2 second delay *);
+   Three_Second_Delay      = 3000  (* Delay argument for 3 second delay *);
+   Tenth_of_a_second_Delay = 100   (* 1/10 second delay                 *);
+
+(* VAR *) CONST
+   Delay_Time            : INTEGER (* Time to delay in response to DELAY *)
+                                   (* command                            *)
+                           = 0;
+
+   Break_Length          : INTEGER (* Length of line break in 1/10 secs  *)
+                           = 50;
+
+   Current_Status_Time   : INTEGER (* Current time for status line       *)
+                           = 0;
+
+   New_Status_Time       : INTEGER (* Updated time for status line       *)
+                           = 0;
+
+   Time_Format           : Time_Format_Type (* Time format               *)
+                           = Military_Time;
+
+   Date_Format           : Date_Format_Type (* Date format               *)
+                           = YMD_Style;
+
+   Date_Format_String    : STRING[10]       (* Date format in string form*)
+                           = 'YY/MM/DD';
+
+   Use_Military          : BOOLEAN (* TRUE to use 24 hour time           *)
+                           = TRUE;
+
+   Window_Hold_Time      : INTEGER (* Time to wait when clearing window  *)
+                           = 10;
+
+(*----------------------------------------------------------------------*)
+(*                          Text/Menu Colors                            *)
+(*----------------------------------------------------------------------*)
+
+(* VAR *) CONST
+   ForeGround_Color : INTEGER      (* Color for ordinary text           *)
+                      = White;
+   BackGround_Color : INTEGER      (* Usual background color            *)
+                      = Black;
+   Border_Color     : INTEGER      (* Usual border color                *)
+                      = Black;
+
+   Menu_Text_Color  : INTEGER      (* Color for menu text               *)
+                      = White;
+   Menu_Title_Color : INTEGER      (* Color for menu titles             *)
+                      = White;
+   Menu_Frame_Color : INTEGER      (* Color for menu frame              *)
+                      = White;
+   Menu_Text_Color_2: INTEGER      (* Secondary color for menu text     *)
+                      = LightGray;
+   Text_Mode        : INTEGER      (* Text mode for all text            *)
+                      = BW80;
+VAR
+   Start_Video_Mode : INTEGER      (* Starting video mode               *);
+
+(*----------------------------------------------------------------------*)
+(*                     Box-drawing characters                           *)
+(*----------------------------------------------------------------------*)
+
+(* VAR *) CONST
+   Box_Chars  :  STRING[8] = 'ÕÍ¸³¾ÍÔ³';
+
+(*----------------------------------------------------------------------*)
+(*                          Status line colors                          *)
+(*----------------------------------------------------------------------*)
+
+(* VAR *) CONST
+   Status_Line_Attr        : INTEGER (* Color attribute for status line *)
+                             = 0;
+   Status_ForeGround_Color : INTEGER (* Text color for status line      *)
+                             = Black;
+   Status_BackGround_Color : INTEGER (* Background color for status line*)
+                             = White;
+   Reverse_Status_Colors   : BOOLEAN (* TRUE to use inverse term colors *)
+                             = TRUE;
+
+(*----------------------------------------------------------------------*)
+(*                    VT100 emulation colors                            *)
+(*----------------------------------------------------------------------*)
+
+(* VAR *) CONST
+   VT100_ForeGround_Color : INTEGER  (* VT100 foreground color         *)
+                            = LightGray;
+   VT100_BackGround_Color : INTEGER  (* VT100 background color         *)
+                            = Black;
+   VT100_Border_Color     : INTEGER  (* VT100 border color             *)
+                            = Black;
+   VT100_Underline_Color  : INTEGER  (* VT100 foreground color         *)
+                            = Blue;
+   VT100_Bold_Color       : INTEGER  (* VT100 background color         *)
+                            = White;
+
+(*----------------------------------------------------------------------*)
+(*                    Graphics emulation colors                         *)
+(*----------------------------------------------------------------------*)
+
+VAR
+   Graphics_ForeGround_Color : INTEGER  (* Graphics mode foreground color *);
+   Graphics_BackGround_Color : INTEGER  (* Graphics mode background color *);
+
+(*----------------------------------------------------------------------*)
+(*                      Error exit flag                                 *)
+(*----------------------------------------------------------------------*)
+
+(* VAR *) CONST                    (* If error exit invoked *)
+   Error_Exit_Taken : BOOLEAN = FALSE;
+
+(*----------------------------------------------------------------------*)
+(*                      Program Option Flags                            *)
+(*----------------------------------------------------------------------*)
+
+CONST
+   ON   = TRUE                       (* Convenient synonym for switches *);
+   OFF  = FALSE                      (* Likewise                        *);
+
+(* VAR *) CONST
+   Debug_Mode          : BOOLEAN   (* TRUE if Debug mode on             *)
+                         = FALSE;
+   Use_EMM_For_Overlays: BOOLEAN   (* TRUE to place overlays in EMM     *)
+                         = FALSE;
+   Show_Status_Line    : BOOLEAN   (* TRUE to display line 25 status    *)
+                         = FALSE;
+   Show_Status_Time    : BOOLEAN   (* TRUE to display time on line 25   *)
+                         = FALSE;
+   Do_Status_Time      : BOOLEAN   (* TRUE to show time on status line  *)
+                         = FALSE;
+   Save_Do_Status_Time : BOOLEAN   (* Saves status time check           *)
+                         = FALSE;
+   Do_Status_Line      : BOOLEAN   (* TRUE to show status line          *)
+                         = FALSE;
+   Local_Echo          : BOOLEAN   (* Local Echo ON/OFF                 *)
+                         = FALSE;
+   Silent_Mode         : BOOLEAN   (* TRUE to suppress bells, music.    *)
+                         = FALSE;
+   Printer_On          : BOOLEAN   (* Echo to printer                   *)
+                         = FALSE;
+   Capture_On          : BOOLEAN   (* Capture mode on                   *)
+                         = FALSE;
+   Exact_Capture       : BOOLEAN   (* TRUE for exact capture mode       *)
+                         = FALSE;
+   Translate_On        : BOOLEAN   (* Translate mode on                 *)
+                         = FALSE;
+   Add_LF              : BOOLEAN   (* Add line feeds to incoming lines  *)
+                         = FALSE;
+   Play_Music_On       : BOOLEAN   (* Play music if found               *)
+                         = TRUE;
+   PibTerm_Done        : BOOLEAN   (* Finished running PibTerm          *)
+                         = FALSE;
+   Gossip_Mode_On      : BOOLEAN   (* Split-screen gossip mode          *)
+                         = FALSE;
+   Reset_Comm_Port     : BOOLEAN   (* TRUE to reset comm port           *)
+                         = TRUE;
+   Comm_Port_Changed   : BOOLEAN   (* TRUE if comm port number changed  *)
+                         = TRUE;
+   Last_Column_Hit     : BOOLEAN   (* TRUE if col 80 hit in display     *)
+                         = FALSE;
+   Auto_Wrap_Mode      : BOOLEAN   (* TRUE for autowrap on long lines   *)
+                         = TRUE;
+   Exploding_Menus     : BOOLEAN   (* TRUE to use exploding menus       *)
+                         = FALSE;
+   Review_On           : BOOLEAN   (* TRUE if review buffer used        *)
+                         = FALSE;
+   Script_File_Mode    : BOOLEAN   (* TRUE if currently exec'ing script *)
+                         = FALSE;
+   Script_Learn_Mode   : BOOLEAN   (* TRUE if currently learning script *)
+                         = FALSE;
+   CompuServe_B_On     : BOOLEAN   (* TRUE to do CompuServe B protocol  *)
+                         = FALSE;
+   Mahoney_On          : BOOLEAN   (* Mahoney BBS codes allowed         *)
+                         = TRUE;
+   When_Mode           : BOOLEAN   (* TRUE if WHEN string defined       *)
+                         = FALSE;
+   When_Drop_Mode      : BOOLEAN   (* TRUE if WHENDROP in effect        *)
+                         = FALSE;
+   WaitQuiet_Mode      : BOOLEAN   (* TRUE if WAITQUIET in effect       *)
+                         = FALSE;
+   WaitCount_Mode      : BOOLEAN   (* TRUE if WAITCOUNT in effect       *)
+                         = FALSE;
+   WaitString_Mode     : BOOLEAN   (* TRUE if WAITSTRING string defined *)
+                         = FALSE;
+   Read_In_Script      : BOOLEAN   (* TRUE to read in script            *)
+                         = FALSE;
+   Really_Wait_String  : BOOLEAN   (* TRUE to really wait for string    *)
+                         = FALSE;
+   Write_Screen_Memory : BOOLEAN   (* TRUE to write video memory direct *)
+                         = FALSE;
+   Write_Screen_Memory_Par : BOOLEAN (* TRUE to write video direct -- param *)
+                         = FALSE;
+   Alter_Baud_Rate     : BOOLEAN   (* TRUE to get baud rate from modem  *)
+                         = TRUE;
+   Check_CTS           : BOOLEAN   (* TRUE to check clear-to-send line  *)
+                         = TRUE;
+   Check_DSR           : BOOLEAN   (* TRUE to check data-set-ready line *)
+                         = FALSE;
+   Hard_Wired          : BOOLEAN   (* TRUE if hard-wired connection     *)
+                         = FALSE;
+   Drop_Dtr_At_End     : BOOLEAN   (* TRUE to drop DTR when closing port*)
+                         = FALSE;
+   Close_Comm_For_Dos  : BOOLEAN   (* TRUE to drop DTR when Alt-J done  *)
+                         = TRUE;
+   Wait_For_Retrace    : BOOLEAN   (* TRUE to wait for retrace in DSW   *)
+                         = TRUE;
+   Wait_For_Retrace_Par: BOOLEAN   (* TRUE to wait for retrace -- param *)
+                         = TRUE;
+   Do_Xon_Xoff_Checks  : BOOLEAN   (* TRUE to use xon/xoff flow control *)
+                         = TRUE;
+   Evict_Partial_Trans : BOOLEAN   (* TRUE to throw away bad downloads  *)
+                         = FALSE;
+   Use_Ymodem_Header   : BOOLEAN   (* Send block 0 in Ymodem non-batch  *)
+                         = FALSE;
+   Use_Block_Zero      : BOOLEAN   (* Use block 0 info when received    *)
+                         = TRUE;
+   Extended_Keypad     : BOOLEAN   (* Allow extended keypad keys        *)
+                         = FALSE;
+   Extended_KeyBoard   : BOOLEAN   (* Allow extended keyboard calls     *)
+                         = FALSE;
+   Attended_Mode       : BOOLEAN   (* TRUE if running attended          *)
+                         = TRUE;
+   Edit_Insert_Mode    : BOOLEAN   (* TRUE if insert mode by default    *)
+                         = TRUE;
+   Auto_Load_FunKeys   : BOOLEAN   (* TRUE to autoload function keys    *)
+                         = FALSE;
+   Use_Dos_Buffer_In   : BOOLEAN   (* TRUE to use DOS function $A       *)
+                         = FALSE;
+   YTerm_On            : BOOLEAN   (* TRUE if YTerm transfers allowed   *)
+                         = FALSE;
+   Use_Dos_Con_Output  : BOOLEAN   (* TRUE to use DOS console writes    *)
+                         = FALSE;
+   Auto_Unload_Scripts : BOOLEAN   (* TRUE to auto unload scripts       *)
+                         = FALSE;
+   Do_Script_Tests     : BOOLEAN   (* TRUE to do script-related checks  *)
+                         = FALSE;
+   Keyboard_Locked     : BOOLEAN   (* TRUE if keyboard locked           *)
+                         = FALSE;
+   Auto_Find_FileNames : BOOLEAN   (* TRUE to find file names in trans. *)
+                         = TRUE;
+   Rlink_Prompt_Each   : BOOLEAN   (* TRUE to prompt each file, Rlink   *)
+                         = FALSE;
+   Graphics_Terminal_Mode : BOOLEAN (* TRUE if graphics terminal        *)
+                         = FALSE;
+   EGA_Present         : BOOLEAN   (* TRUE if EGA installed             *)
+                         = FALSE;
+   VGA_Present         : BOOLEAN   (* TRUE if VGA installed             *)
+                         = FALSE;
+   ATI_Ega_Wonder      : BOOLEAN   (* If ATI Wonder EGA installed       *)
+                         = FALSE;
+   Cursor_Underline    : BOOLEAN   (* TRUE = underline cursor           *)
+                         = TRUE;
+   Cursor_Blink        : BOOLEAN   (* TRUE if cursor blinks             *)
+                         = TRUE;
+   Auto_Strip_High_Bit : BOOLEAN   (* TRUE to strip high bit in term.   *)
+                         = FALSE;
+   Software_Scroll     : BOOLEAN   (* TRUE to use software scrolling.   *)
+                         = FALSE;
+   Software_Scroll_Par : BOOLEAN   (* TRUE to use software scrolling.   *)
+                         = FALSE;
+
+   Current_Carrier_Status : BOOLEAN (* Has current carrier detect status*)
+                            = FALSE;
+   New_Carrier_Status     : BOOLEAN (* Has new carrier detect status    *)
+                            = FALSE;
+   Carrier_Dropped        : BOOLEAN (* TRUE if carrier dropped          *)
+                            = FALSE;
+   Video_Handler_Installed: BOOLEAN (* TRUE if new int $10 handler inst.*)
+                            = FALSE;
+   Send_Upper_Case_Only   : BOOLEAN (* TRUE to send upper case only     *)
+                            = FALSE;
+   Log_File_Open          : BOOLEAN (* TRUE if log file open            *)
+                            = FALSE;
+   Logging_On             : BOOLEAN (* TRUE to write to log             *)
+                            = FALSE;
+   Honor_Xoff_Ymodem      : BOOLEAN (* TRUE to allow xon/xoff in Ymodem *)
+                            = TRUE;
+   Allow_EGA_Graphics     : BOOLEAN (* TRUE to allow EGA graphics mode  *)
+                            = TRUE;
+
+(*----------------------------------------------------------------------*)
+(*                           Global files                               *)
+(*----------------------------------------------------------------------*)
+
+VAR
+   Capture_File        : Text_File (* Capture file                      *);
+   Script_File         : Text_File (* Script file                       *);
+   Log_File            : Text_File (* Log file for host mode            *);
+   Lst                 : Text_File (* Printer file                      *);
+
+(* VAR *) CONST
+   Capture_File_Name   : FileStr   (* Capture file name                 *)
+                         = '';
+   Config_File_Name    : FileStr   (* Configuration file name           *)
+                         = 'PIBTERM.CNF';
+   Dialing_File_Name   : FileStr   (* Dialing directory file name       *)
+                         = 'PIBTERM.FON';
+   Function_Key_Name   : FileStr   (* Function key file name            *)
+                         = 'PIBTERM.FNC';
+   Translate_File_Name : FileStr   (* Translate table file name         *)
+                         = 'PIBTERM.TRA';
+   Prefix_File_Name    : FileStr   (* Dialing prefix file name          *)
+                         = 'PIBTERM.PRE';
+   Log_File_Name       : FileStr   (* Log file name                     *)
+                         = 'PIBTERM.LOG';
+   Script_File_Name    : FileStr     (* Script file name                *)
+                         = 'PIBTERM.SCR';
+
+   Home_Dir_Path       : FileStr   (* Home Directory Path for PibTerm   *)
+                         = '';
+   Home_Dir            : FileStr   (* Home Directory for PibTerm        *)
+                         = '';
+   Home_Drive          : CHAR      (* Home Drive Letter for PibTerm     *)
+                         = ' ';
+   Download_Dir_Path   : FileStr   (* Download directory name           *)
+                         = '';
+   Upload_Dir_Path     : FileStr   (* Upload directory name             *)
+                         = '';
+   Script_Path         : FileStr   (* Script path                       *)
+                         = '';
+   Function_Key_Path   : FileStr   (* Function key path                 *)
+                         = '';
+
+   Screen_Dump_Name    : FileStr     (* Screen dump file name           *)
+                         = 'SCREENDUM.DAT';
+
+   Graphics_Dump_Name  : FileStr     (* Graphics mode screen dump name  *)
+                         = 'GSCRNDUM.DAT';
+
+   Saved_Script_File_Name : FileStr(* Saved script file name            *)
+                         = '';
+
+   Editor_Name         : FileStr     (* Path for editor                 *)
+                         = '';
+   Browser_Name        : FileStr     (* Path for file browser           *)
+                         = '';
+
+   Lst_OK              : BOOLEAN   (* If printer opened OK              *)
+                         = FALSE;
+
+   CRLF_String         : STRING[2] (* CR + LF for printing              *)
+                         = ^M^J;
+
+(*----------------------------------------------------------------------*)
+(*                      Host mode globals                               *)
+(*----------------------------------------------------------------------*)
+
+(* VAR *) CONST
+   Host_Mode           : BOOLEAN   (* TRUE if PibTerm in host mode      *)
+                         = FALSE;
+   Privilege           : CHAR      (* Host mode privilege level         *)
+                         = ' ';
+   Host_Mode_Upload    : FileStr   (* Upload path for host mode         *)
+                         = '';
+   Host_Mode_Download  : FileStr   (* Download path for host mode       *)
+                         = '';
+   Host_Mode_Blank_Time: LONGINT   (* Time after which to blank screen  *)
+                         = 180;
+   Host_CTTY_Device    : STRING[8] (* CTTY Device driver name prefix    *)
+                         = 'COM';
+
+(*----------------------------------------------------------------------*)
+(*                      Spooled print file                              *)
+(*----------------------------------------------------------------------*)
+
+CONST
+   Max_Spool_Buffer_Count = 512;
+
+TYPE
+   Spool_File_Buffer_Type = ARRAY[1..Max_Spool_Buffer_Count] OF CHAR;
+   Spool_File_Buffer_Ptr  = ^Spool_File_Buffer_Type;
+
+VAR
+   Spool_File         : FILE       (* Spooling file *);
+
+(* VAR *) CONST
+   Spool_Buffer_Count : INTEGER    (* Characters in current buffer      *)
+                        = 0;
+   Spool_Buffer_Pos   : INTEGER    (* Offset of current char in buffer  *)
+                        = 0;
+   Spool_Buffer       : Spool_File_Buffer_Ptr  (* Spooling buffer       *)
+                        = NIL;
+   Print_Spooling     : BOOLEAN    (* TRUE if file being printed        *)
+                        = FALSE;
+   Printer_Setup      : AnyStr     (* Printer setup string              *)
+                        = '';
+
+(*----------------------------------------------------------------------*)
+(*                         Review buffer                                *)
+(*----------------------------------------------------------------------*)
+
+CONST
+   Max_Review_Line_Length = 253    (* Maximum chars in each review line *);
+
+TYPE
+   Review_Buffer_Type = ARRAY[1..1] OF CHAR;
+   Review_Buffer_Ptr  = ^Review_Buffer_Type;
+
+(* VAR *) CONST
+   Max_Review_Length : INTEGER     (* Number of chars in review buffer *)
+                       = 0;
+                                   (* Review buffer pointer *)
+   Review_Buffer     : Review_Buffer_Ptr
+                       = NIL;
+
+   Review_Line       : AnyStr      (* Current line                      *)
+                       = '';
+
+   Review_Head       : INTEGER     (* Head of review buffer             *)
+                       = 0;
+
+   Review_Tail       : INTEGER     (* Tail of review buffer             *)
+                       = 0;
+
+(*----------------------------------------------------------------------*)
+(*          Definitions for keyboard interrupt handling                 *)
+(*----------------------------------------------------------------------*)
+
+CONST
+   Kbd_Interrupt    = 9            (* Keyboard interrupt number  *);
+   Kbd_ROM_Data     = $0040        (* Segment with keyboard data *);
+   Kbd_Flag         = $0017        (* Byte 1 of keyboard status  *);
+   Kbd_Flag1        = $0018        (* Byte 2 of keyboard status  *);
+   Kbd_Head         = $001A        (* Buffer head pointer        *);
+   Kbd_Tail         = $001C        (* Buffer tail pointer        *);
+   Kbd_Buffer       = $001E        (* Default buffer location    *);
+   Kbd_Buffer_End   = $003E        (* End of default buffer      *);
+
+   Kbd_Save_Iaddr   : Pointer = Nil(* Save prev. kbd int. status *);
+   Kbd_Save_Scan    : BYTE    = 0  (* Save scan code header      *);
+
+(*----------------------------------------------------------------------*)
+(*                    PibTerm Command Key Definitions                   *)
+(*----------------------------------------------------------------------*)
+
+CONST
+   No_Misc_Keys       = 7;
+   Max_Extended_Keys  = 61;
+   Extended_Keys_Base = 200;
+   
+CONST
+   Alt_A = 30;      Alt_J = 36;      Alt_S = 31;
+   Alt_B = 48;      Alt_K = 37;      Alt_T = 20;
+   Alt_C = 46;      Alt_L = 38;      Alt_U = 22;
+   Alt_D = 32;      Alt_M = 50;      Alt_V = 47;
+   Alt_E = 18;      Alt_N = 49;      Alt_W = 17;
+   Alt_F = 33;      Alt_O = 24;      Alt_X = 45;
+   Alt_G = 34;      Alt_P = 25;      Alt_Y = 21;
+   Alt_H = 35;      Alt_Q = 16;      Alt_Z = 44;
+   Alt_I = 23;      Alt_R = 19;
+
+   Alt_1 = 120;     Alt_5 = 124;     Alt_9 = 128;
+   Alt_2 = 121;     Alt_6 = 125;     Alt_0 = 129;
+   Alt_3 = 122;     Alt_7 = 126;     Alt_Minus = 130;
+   Alt_4 = 123;     Alt_8 = 127;     Alt_Equal = 131;
+
+   Shift_Tab = 15;  Ctrl_Tab  = 151; Alt_Tab   = 172;
+
+   F1        = 59;  Alt_F1   = 104;
+   Shift_F1  = 84;  Ctrl_F1  = 94;
+
+   F2        = 60;  Alt_F2   = 105;
+   F3        = 61;  Alt_F3   = 106;
+   F4        = 62;  Alt_F4   = 107;
+   F5        = 63;  Alt_F5   = 108;
+   F6        = 64;  Alt_F6   = 109;
+   F7        = 65;  Alt_F7   = 110;
+   F8        = 66;  Alt_F8   = 111;
+   F9        = 67;  Alt_F9   = 112;
+
+   F10       = 68;  Alt_F10  = 113;
+   Shift_F10 = 93;  Ctrl_F10 = 103;
+
+   F11       = 133; Alt_F11  = 139;
+   Shift_F11 = 135; Ctrl_F11 = 137;
+
+   F12       = 134; Alt_F12  = 140;
+   Shift_F12 = 136; Ctrl_F12 = 138;
+
+   U_Arrow   = 72;  Alt_U_Arrow = 175;  Ctrl_U_Arrow = 160;
+   D_Arrow   = 80;  Alt_D_Arrow = 183;  Ctrl_D_Arrow = 164;
+   L_Arrow   = 75;  Alt_L_Arrow = 178;  Ctrl_L_Arrow = 115;
+   R_Arrow   = 77;  Alt_R_Arrow = 180;  Ctrl_R_Arrow = 116;
+
+   Home      = 71;  Alt_Home      = 174;  Ctrl_Home      = 119;
+   End_Key   = 79;  Alt_End_Key   = 182;  Ctrl_End_Key   = 117;
+   PgUp      = 73;  Alt_PgUp      = 176;  Ctrl_PgUp      = 132;
+   PgDn      = 81;  Alt_PgDn      = 184;  Ctrl_PgDn      = 118;
+   Ins_Key   = 82;  Alt_Ins_Key   = 185;  Ctrl_Ins_Key   = 165;
+   Del_Key   = 83;  Alt_Del_Key   = 186;  Ctrl_Del_Key   = 166;
+   Kpd_Minus = 74;  Alt_Kpd_Minus = 177;  Ctrl_Kpd_Minus = 161;
+   Kpd_Plus  = 78;  Alt_Kpd_Plus  = 181;  Ctrl_Kpd_Plus  = 163;
+   Kpd_5     = 76;  Alt_Kpd_5     = 179;  Ctrl_Kpd_5     = 162;
+
+   Alt_Enter  = 28;
+
+   BS_Key      = 253;   Kpd_Enter      = 7;
+   Ctrl_BS_Key = 254;   Alt_Kpd_Enter  = 8;
+   Alt_BS      = 171;   Ctrl_Kpd_Enter = 9;
+
+   Kpd_Star      = 1;   Kpd_Slash      = 4;
+   Alt_Kpd_Star  = 2;   Alt_Kpd_Slash  = 5;
+   Ctrl_Kpd_Star = 3;   Ctrl_Kpd_Slash = 6;
+
+   PrtSc       = 255;
+   Ctrl_PrtSc  = 114;
+   Alt_PrtSc   = 55;
+
+   X_U_Arrow   = 201;  Alt_X_U_Arrow = 205;  Ctrl_X_U_Arrow = 209;
+   X_D_Arrow   = 202;  Alt_X_D_Arrow = 206;  Ctrl_X_D_Arrow = 210;
+   X_L_Arrow   = 203;  Alt_X_L_Arrow = 207;  Ctrl_X_L_Arrow = 211;
+   X_R_Arrow   = 204;  Alt_X_R_Arrow = 208;  Ctrl_X_R_Arrow = 212;
+
+   X_Home      = 213;  Alt_X_Home      = 219;  Ctrl_X_Home      = 225;
+   X_End_Key   = 214;  Alt_X_End_Key   = 220;  Ctrl_X_End_Key   = 226;
+   X_PgUp      = 215;  Alt_X_PgUp      = 221;  Ctrl_X_PgUp      = 227;
+   X_PgDn      = 216;  Alt_X_PgDn      = 222;  Ctrl_X_PgDn      = 228;
+   X_Ins_Key   = 217;  Alt_X_Ins_Key   = 223;  Ctrl_X_Ins_Key   = 229;
+   X_Del_Key   = 218;  Alt_X_Del_Key   = 224;  Ctrl_X_Del_Key   = 230;
+
+
+(* VAR *) CONST
+   Funk_Bases:  ARRAY[1..4]  OF BYTE (* Function key scan code bases   *)
+                = ( 58, 83, 93, 103 );
+
+   Funk_Bases_2:ARRAY[1..4]  OF BYTE (* Func key scan code bases, >F10 *)
+                = ( 122, 124, 126, 128 );
+
+   Number_Nos:  ARRAY[0..12] OF BYTE (* Alt-# indices                  *)
+                = ( 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 11, 12 );
+
+   Keypad_Nos      :  ARRAY[0..15] OF BYTE (* Keypad indices  *)
+                      = ( 82, 79, 80, 81, 75,
+                          76, 77, 71, 72, 73,
+                          83, 74, 78,  1,  4,
+                          7 );
+
+   Ctrl_Keypad_Nos :  ARRAY[0..15] OF BYTE (* Ctrl-keypad indices *)
+                      = ( 165, 117, 164, 118, 115,
+                          162, 116, 119, 160, 132,
+                          166, 161, 163,   3,   6,
+                          9 );
+
+   Alt_Keypad_Nos  :  ARRAY[0..15] OF BYTE (* Alt-keypad indices  *)
+                      = ( 185, 182, 183, 184, 178,
+                          179, 180, 174, 175, 176,
+                          186, 177, 181,   2,   5,
+                          8 );
+
+   Misc_Keys :  ARRAY[1..No_Misc_Keys] OF BYTE (* Miscellaneous indices*)
+                = ( 28, 255, 55, 114, 253, 254, 171 );
+
+                                   (* Mapping for 101-key keyboards *)
+
+   Ext_AX_Vals: ARRAY[1..Max_Extended_Keys] OF WORD =
+                ( $E02F, $372A, $4A2D, $4E2B, $E00D,
+                  $9500, $9600, $8E00, $9000, $E00A,
+                  $8D00, $8F00, $9100, $9200, $9300,
+                  $A400, $3700, $4A00, $4E00, $A600,
+                  $48E0, $50E0, $4BE0, $4DE0, $AFE0,
+                  $B7E0, $B2E0, $B4E0, $8DE0, $91E0,
+                  $73E0, $74E0, $47E0, $4FE0, $49E0,
+                  $51E0, $52E0, $53E0, $97E0, $9FE0,
+                  $99E0, $A1E0, $A2E0, $A3E0, $77E0,
+                  $75E0, $84E0, $76E0, $92E0, $93E0,
+                  $9700, $9F00, $9900, $A100, $A200,
+                  $A300, $9800, $A000, $9B00, $9D00,
+                  $0E00  );
+
+   Key_Values : ARRAY[1..Max_Extended_Keys] OF BYTE =
+                (   4,   1,  74,  78,   7,
+                    6,   3, 161, 163,   9,
+                  160, 162, 164, 165, 166,
+                    5,   2, 177, 181,   8,
+                  201, 202, 203, 204, 205,
+                  206, 207, 208, 209, 210,
+                  211, 212, 213, 214, 215,
+                  216, 217, 218, 219, 220,
+                  221, 222, 223, 224, 225,
+                  226, 227, 228, 229, 230,
+                  219, 220, 221, 222, 223,
+                  224, 205, 206, 207, 208,
+                  171  );
+
+(*----------------------------------------------------------------------*)
+(*                   Auxilliary keyboard buffers                        *)
+(*----------------------------------------------------------------------*)
+
+(* VAR *) CONST
+   Keyboard_Buffer   : AnyStr      (* Holds program generated input  *)
+                       = '';
+   Keyboard_Line     : AnyStr      (* Holds manually generated input *)
+                       = '';
+   Keyboard_Line_Pos : INTEGER     (* Position in keyboard line      *)
+                       = 0;
+
+                                   (* Command-key definitions        *)
+(* VAR *) CONST
+   Alt_Let_Set       : SET OF BYTE =
+                     [ Alt_A, Alt_B, Alt_C, Alt_D, Alt_E, Alt_F, Alt_G,
+                       Alt_H, Alt_I, Alt_J, Alt_K, Alt_L, Alt_M, Alt_N,
+                       Alt_O, Alt_P, Alt_Q, Alt_R, Alt_S, Alt_T, Alt_U,
+                       Alt_V, Alt_W, Alt_X, Alt_Y, Alt_Z ];
+
+(*----------------------------------------------------------------------*)
+(*                   Incoming/Outgoing key definitions                  *)
+(*----------------------------------------------------------------------*)
+
+CONST
+   Max_Key_Def = 255;
+
+TYPE
+   Key_Record = RECORD
+                   Def  : StringPtr;
+                   Name : STRING[4];
+                END;
+
+VAR
+                                   (* Key strings *)
+
+   Key_Definitions  : ARRAY[0..Max_Key_Def] OF Key_Record;
+
+                                   (* Sort index of key names *)
+
+   Key_Indices      : ARRAY[0..Max_Key_Def] OF BYTE;
+   NKey_Indices     : INTEGER      (* Number of sorted key names *);
+
+   Key_No           : INTEGER      (* Key number to execute             *);
+
+(* VAR *) CONST
+   FK_CR        : CHAR = '|'       (* Function key definition CR        *);
+   FK_Delay     : CHAR = '~'       (* Function key def. 1 second wait   *);
+   FK_Wait_For  : CHAR = '`'       (* Function key wait for next char   *);
+   FK_Ctrl_Mark : CHAR = '^'       (* Marks next char as ctrl character *);
+   FK_Script_Ch : CHAR = '@'       (* Script to execute follows         *);
+   FK_Delay_Time: INTEGER = 10     (* Delay to insert between each char *);
+
+                                   (* Incoming character translate table *)
+VAR
+   TrTab        : ARRAY[CHAR] OF CHAR;
+
+(* VAR *) CONST
+   BS_String           : AnyStr    (* String to send when Back Space hit*)
+                         = ^H;
+   Ctrl_BS_String      : AnyStr    (* String to send when CTRL BS hit   *)
+                         = #127;
+
+(*----------------------------------------------------------------------*)
+(*               Global communications variables                        *)
+(*----------------------------------------------------------------------*)
+
+(* VAR *) CONST
+   Data_Bits     : 5..8 = 8;
+   Parity        : CHAR = 'N';
+   Stop_Bits     : 0..2 = 1;
+   Comm_Port     : 1..4 = 1;
+   Baud_Rate     : 110..38400 = 2400;
+   Cmd_Line_Port : 0..4 = 0;
+
+(* STRUCTURED *) CONST
+   N_Baud_Rates = 11;
+
+   Baud_Rates: ARRAY[ 1 .. N_Baud_Rates ] OF WORD
+               = ( 110, 150, 300, 600, 1200, 2400, 4800, 9600, 19200,
+                   38400, 57600 );
+
+(*----------------------------------------------------------------------*)
+(*          Global variables for view file/directory/area codes         *)
+(*----------------------------------------------------------------------*)
+
+VAR
+   View_Count     : INTEGER;
+   View_Line      : STRING[128];
+   View_Done      : BOOLEAN;
+   View_Char      : STRING[1];
+   View_Y         : INTEGER;
+
+(*----------------------------------------------------------------------*)
+(*           Types and Variables for Terminal Emulation Facilities      *)
+(*----------------------------------------------------------------------*)
+
+CONST
+   NumberTerminalTypes   = 14       (* # terminal types - 1         *);
+   Actual_N_Of_Terminals = 15       (* # terminal types implemented *);
+   Max_User_Terminals    = 5        (* # user terminals allowed     *);
+
+TYPE
+   Terminal_Type = ( Dumb,     VT52,     Ansi,   VT100,  Gossip,
+                     HostMode, TEK4010,  ADM3a,  ADM5,   TV925,
+                     User1,    User2,    User3,  User4,  User5   );
+
+(* VAR *) CONST
+                                   (* Type of terminal to emulate      *)
+
+   Terminal_To_Emulate : Terminal_Type = VT100;
+
+                                   (* Saves previous term. type        *)
+
+   Saved_Gossip_Term   : Terminal_Type = VT100;
+
+                                   (* List of terminals to emulate     *)
+
+   Terminal_Type_List  : ARRAY[0..NumberTerminalTypes] OF Terminal_Type =
+                           ( Dumb,     VT52,     Ansi,     VT100,
+                             Gossip,   HostMode, TEK4010,  ADM3a,
+                             ADM5,     TV925,    User1,    User2,
+                             User3,    User4,    User5 );
+
+                                   (* Terminal names *)
+
+   Terminal_Name_List  : ARRAY[0..NumberTerminalTypes] OF STRING[7] =
+                          ( 'Dumb',     'VT52',     'ANSI',     'VT100',
+                            'Gossip',   'Host',     'TEK4010',  'ADM3A',
+                            'ADM5',     'TV925',    'User1',    'User2',
+                            'User3',    'User4',    'User5' );
+
+                                   (* Names for status line *)
+(* VAR *) CONST
+   Status_Line_Name    : STRING[132] = '';
+   Short_Terminal_Name : STRING[20]  = '';
+
+(* VAR *) CONST                    (* VT100 answerback message *)
+
+   VT100_Answerback_Message : STRING[20] = '';
+
+(* VAR *) CONST
+   KeyPad_Appl_On_File   : FileStr (* Key defs to read when appl ON *)
+                           = '';
+
+   KeyPad_Appl_Off_File  : FileStr (* Key defs to read when appl OFF *)
+                           = '';
+
+VAR
+                                     (* Remember cursor/attributes      *)
+   Save_Row_Position     : INTEGER   (* Save row position               *);
+   Save_Col_Position     : INTEGER   (* Save column position            *);
+   Save_BG_Color         : INTEGER   (* Save background color           *);
+   Save_FG_Color         : INTEGER   (* Save foreground color           *);
+   Save_Graphics_Mode    : BOOLEAN   (* Save graphics mode              *);
+   Save_Bolding          : BOOLEAN   (* Save bolding mode               *);
+   Save_Blinking         : BOOLEAN   (* Save blinking mode              *);
+   Save_Done             : BOOLEAN   (* If save actually done           *);
+   Save_Origin_Mode      : BOOLEAN   (* Save origin mode setting        *);
+   Save_Top_Scroll       : INTEGER   (* Save top line in scrolling reg. *);
+   Save_Bottom_Scroll    : INTEGER   (* Save bottom line in scroll reg. *);
+
+   Ansi_ForeGround_Color : INTEGER   (* Global foreground color here    *);
+   Ansi_BackGround_Color : INTEGER   (* Global background color here    *);
+   Ansi_Underline_Color  : INTEGER   (* Color for underlines            *);
+   Ansi_Bold_Color       : INTEGER   (* Color for bolding               *);
+
+   FG                    : INTEGER   (* Foreground color                *);
+   BG                    : INTEGER   (* Background color                *);
+
+   Save_Global_FG        : INTEGER   (* Save global foreground color    *);
+   Save_Global_BG        : INTEGER   (* Save global background color    *);
+   Save_FG               : INTEGER   (* Save foreground color           *);
+   Save_BG               : INTEGER   (* Save background color           *);
+   Save_EG               : INTEGER   (* Save border color               *);
+   Save_FG1              : INTEGER   (* Save foreground color           *);
+   Save_BG1              : INTEGER   (* Save background color           *);
+
+                                   (* General emulation variables *)
+(* VAR *) CONST
+   Graphics_Mode       : BOOLEAN   (* TRUE if graphics mode on        *)
+                         = FALSE;
+   Alt_KeyPad_Mode     : BOOLEAN   (* TRUE if alternate keypad in use *)
+                         = FALSE;
+   Hold_Screen_Mode    : BOOLEAN   (* TRUE if in hold screen mode     *)
+                         = FALSE;
+   Reset_Requested     : BOOLEAN   (* TRUE to reset terminal          *)
+                         = FALSE;
+   Auto_Print_Mode     : BOOLEAN   (* IF auto print mode in effect    *)
+                         = FALSE;
+   Printer_Ctrl_Mode   : BOOLEAN   (* IF printer controller mode on   *)
+                         = FALSE;
+   Insertion_Mode      : BOOLEAN   (* If insertion mode on            *)
+                         = FALSE;
+   Double_Width_Mode   : BOOLEAN   (* Double width characters         *)
+                         = FALSE;
+   Skip_All_Mode       : BOOLEAN   (* Skip all chars in line          *)
+                         = FALSE;
+   Bolding_On          : BOOLEAN   (* TRUE if bolding on              *)
+                         = FALSE;
+   Blinking_On         : BOOLEAN   (* TRUE if blinking on             *)
+                         = FALSE;
+   Reverse_On          : BOOLEAN   (* TRUE if reverse video on        *)
+                         = FALSE;
+   Width_132           : BOOLEAN   (* TRUE if 132 column mode         *)
+                         = FALSE;
+   New_Line            : BOOLEAN   (* TRUE if LF -> CR +LF            *)
+                         = FALSE;
+   New_Line_Param      : BOOLEAN   (* TRUE if LF -> CR +LF (.CNF)     *)
+                         = FALSE;
+   Getting_Music       : BOOLEAN   (* TRUE if getting music           *)
+                         = FALSE;
+   Origin_Mode         : BOOLEAN   (* TRUE for region origin mode     *)
+                         = FALSE;
+   Auto_Change_Arrows  : BOOLEAN   (* TRUE to handle cursor key mode  *)
+                                   (* changes in VT100 emulation.     *)
+                         = FALSE;
+
+                                   (* Escape mode processing      *)
+(* VAR *) CONST
+   Escape_Mode         : BOOLEAN     (* If processing escape sequence   *)
+                         = FALSE;
+   Escape_Number       : INTEGER     (* # of numeric parms in esc seq.  *)
+                         = 0;
+
+VAR
+                                     (* Holds numeric parms in esc seq  *)
+   Escape_Register     : ARRAY[1..100] OF BYTE;
+   Escape_Str          : AnyStr      (* Collects string arg in esc seq  *);
+   Escape_Type         : CHAR        (* Type of escape seq. being done  *);
+   Reg_Val             : INTEGER     (* General utility register value  *);
+
+                                     (* Attributes for each line        *)
+
+   Line_Attributes     : ARRAY[1..100] OF BYTE;
+
+                                     (* Save current scrolling region   *)
+   Top_Scroll          : INTEGER;
+   Bottom_Scroll       : INTEGER;
+
+   Ansi_Last_Line      : INTEGER   (* Last line in display *);
+
+(* VAR *) CONST
+                                   (* LED status in VT100  *)
+
+   VT100_Led_Vector    : ARRAY[1..4] OF BOOLEAN
+                         = ( FALSE, FALSE, FALSE, FALSE );
+
+
+(* VAR *) CONST                    (* Names of user-defined terminals *)
+
+   User_Term_Name      : ARRAY[1..Max_User_Terminals] OF FileStr =
+                         ('USER1.TDE','USER2.TDE','USER3.TDE',
+                          'USER4.TDE','USER5.TDE');
+
+(*--------------------------------------------------------------------------*)
+(*                    Display action type definitions                       *)
+(*--------------------------------------------------------------------------*)
+
+(*--------------------------------------------------------------------------*)
+(*   CursorUp        --- Move cursor up one line                            *)
+(*   CursorDown      --- Move cursor down one line                          *)
+(*   CursorLeft      --- Move cursor left one column                        *)
+(*   CursorRight     --- Move cursor right one column                       *)
+(*   ClearScreen     --- Clear entire screen                                *)
+(*   ClearEOS        --- Clear to end of screen from current position       *)
+(*   ClearSCur       --- Clear from start of screen to current position     *)
+(*   ClearLine       --- Clear entire line                                  *)
+(*   ClearEOL        --- Clear to end of line                               *)
+(*   ClearLCur       --- Clear start of line to current position            *)
+(*   CursorHome      --- Home the cursor                                    *)
+(*   InsertCharA     --- Insert a character after current position          *)
+(*   InsertCharB     --- Insert a character before current position         *)
+(*   InsertLineA     --- Insert line after current line                     *)
+(*   InsertLineB     --- Insert line before current line                    *)
+(*   DeleteChar      --- Delete character at current position               *)
+(*   DeleteLine      --- Delete current line                                *)
+(*   StartInsert     --- Enter character insertion mode                     *)
+(*   EndInsert       --- Exit character insertion mode                      *)
+(*   NormalVideo     --- Enter normal video mode                            *)
+(*   ReverseVideo    --- Enter reverse video mode                           *)
+(*   StartBlink      --- Start blink mode                                   *)
+(*   EndBlink        --- End blink mode                                     *)
+(*   StartUnderline  --- Start underline mode                               *)
+(*   EndUnderline    --- End underline mode                                 *)
+(*   StartBold       --- Start bold mode                                    *)
+(*   EndBold         --- End bold mode                                      *)
+(*   ReverseIndex    --- Reverse line feed                                  *)
+(*   PrintLine       --- Print current line                                 *)
+(*   PrintPage       --- Print whole screen                                 *)
+(*   CursorPos       --- Position cursor                                    *)
+(*   StartAltKey     --- Enter alternate keypad mode                        *)
+(*   EndAltKey       --- End alternate keypad mode                          *)
+(*   StartAutoPrint  --- Start autoprint mode                               *)
+(*   EndAutoPrint    --- End autoprint mode                                 *)
+(*   SetTab          --- Set tab stop                                       *)
+(*   ClearTab        --- Clear tab stop                                     *)
+(*   StartDim        --- Start dim mode                                     *)
+(*   EndDim          --- End dim mode                                       *)
+(*   DoCISBESCI      --- Do CompuServe B protocol <ESC>I response           *)
+(*   DoCISBDLE       --- Do CompuServe B protocol <DLE> response            *)
+(*   DoCISBENQ       --- Do CompuServe B protocol <ENQ> response            *)
+(*   DoKermitReceive --- Do Kermit autodownload                             *)
+(*   DoZmodemReceive --- Do Zmodem autodownload                             *)
+(*--------------------------------------------------------------------------*)
+
+
+TYPE
+   Display_Action = ( CursorUp,        CursorDown,     CursorLeft,    CursorRight,
+                      ClearScr,        ClearScrH,      ClearEOS,      ClearSCur,
+                      ClearLine,
+                      ClearEOL,        ClearLCur,      CursorHome,    InsertCharA,
+                      InsertCharB,     InsertLineA,    InsertLineB,   DeleteChar,
+                      DeleteLine,      StartInsert,    EndInsert,     NormalVideo,
+                      ReverseVideo,    StartBlink,     EndBlink,      StartUnderline,
+                      EndUnderline,    StartBold,      EndBold,
+                      StartDim,        EndDim,         ReverseIndex,
+                      PrintLine,       PrintPage,      CursorPosVT52, StartAltKey,
+                      EndAltKey,       StartAutoPrint, EndAutoPrint,  SetTab,
+                      ClearTab,        DisplayChar,    StartPrintControl,
+                      EndPrintControl, IdentifyVT52,
+                      StartGraphicsMode, EndGraphicsMode, TV950Video, Swallow,
+                      CursorPosH,        CursorPosV,
+                      StartVT52HoldScreen, EndVT52HoldScreen,
+                      EnterVT100, EnterVT52,
+                      ExecPCCommands, SendMahoneyOn,
+                      EnterState1, EnterState2, EnterState3, EnterState4, EnterState5,
+                      Index, VT52HT, VT52LF, DoCISBESCI, DoCISBDLE, DoCISBENQ,
+                      DoKermitReceive, DoZmodemReceive
+                    );
+
+   Display_Action_Vector_Type   = ARRAY[CHAR] OF Display_Action;
+   Display_Action_Vector_Ptr    = ^Display_Action_Vector_Type;
+
+   Display_Action_Chars_Type    = ARRAY[1..1] OF CHAR;
+   Display_Action_Actions_Type  = ARRAY[1..1] OF Display_Action;
+
+   Display_Action_Chars_Ptr     = ^Display_Action_Chars_Type;
+   Display_Action_Actions_Ptr   = ^Display_Action_Actions_Type;
+
+   Character_Vector_Type        = ARRAY[CHAR] OF CHAR;
+   Character_Vector_Ptr_Type    = ^Character_Vector_Type;
+
+(*--------------------------------------------------------------------------*)
+(*                    Display action vectors                                *)
+(*--------------------------------------------------------------------------*)
+
+CONST
+   MaxDisplayStates   = 10;
+   MaxDisplayCharSets = 5;
+
+TYPE
+   Tab_Stop_Vector    = ARRAY[1..132] OF BYTE;
+
+VAR
+   Display_Action_Ptr      : ARRAY[1..MaxDisplayStates] OF Display_Action_Vector_Ptr;
+   Display_Action_State    : 1..MaxDisplayStates;
+
+   Display_Char_Set_Ptr    : ARRAY[1..MaxDisplayCharSets] OF Character_Vector_Ptr_Type;
+   Character_Set_Ptr       : Character_Vector_Ptr_Type;
+
+                                       (* Tab stuff *)
+VAR
+   Number_Tab_Stops        : INTEGER   (* Number of tabs currently defined *);
+
+                                       (* Tab positions                    *)
+
+   Tab_Stops               : Tab_Stop_Vector;
+
+(*----------------------------------------------------------------------*)
+(*           Global variables for phone directory handling              *)
+(*----------------------------------------------------------------------*)
+
+CONST
+   Max_Phone_Prefixes        = 5;
+   Max_Dial_Nos              = 10;
+   Dialing_Dir_Entry_Length  = 79;
+
+(* STRUCTURED *) CONST
+   Phone_Prefix_Chars   : ARRAY[ 1 .. Max_Phone_Prefixes ] OF CHAR
+                          = ( '+', '-', '!', '@', '#' );
+
+TYPE
+
+   Char_25  = PACKED ARRAY[ 1 .. 25 ] OF CHAR;
+   Char_15  = PACKED ARRAY[ 1 .. 15 ] OF CHAR;
+   Char_9   = PACKED ARRAY[ 1 .. 9  ] OF CHAR;
+   Char_8   = PACKED ARRAY[ 1 .. 8  ] OF CHAR;
+   Char_5   = PACKED ARRAY[ 1 .. 5  ] OF CHAR;
+   Char_2   = PACKED ARRAY[ 1 .. 2  ] OF CHAR;
+
+   String30 = STRING[30];
+
+                                   (* Dialing file entry *)
+   Phone_Number_Record = RECORD
+                            Phone_Name        : Char_25;
+                            Phone_Number      : Char_15;
+                            Phone_Baud        : Char_5;
+                            Phone_Parity      : CHAR;
+                            Phone_DataBits    : CHAR;
+                            Phone_StopBits    : CHAR;
+                            Phone_Echo        : CHAR;
+                            Phone_BackSpace   : CHAR;
+                            Phone_LineFeed    : CHAR;
+                            Phone_Term_Type   : CHAR;
+                            Phone_Trans_Type  : Char_2;
+                            Phone_Script      : Char_9;
+                            Phone_Last_Date   : Char_8;
+                            Phone_Last_Time   : Char_8;
+                         END;
+                                   (* Dialing directory *)
+
+   Dialing_Directory_Type = ARRAY[1..1] OF Phone_Number_Record;
+
+   Dialing_Directory_Ptr  = ^Dialing_Directory_Type;
+
+   Dialing_List_Record    = RECORD
+                               Number: STRING[30];
+                               Tries : INTEGER;
+                            END;
+
+                                   (* Current phone entry data *)
+VAR
+   Phone_Entry_Data    : Phone_Number_Record;
+
+(* VAR *) CONST
+                                   (* Current phone record number *)
+   Phone_Entry_Number  : INTEGER = -1;
+
+                                   (* Current phone page number   *)
+   Phone_Entry_Page    : INTEGER = 1;
+                                   (* Current phone section       *)
+   Dialing_Page        : INTEGER = 1;
+
+                                   (* Phone prefix numbers        *)
+
+   Phone_Prefix_Nos    : ARRAY[ 1 .. Max_Phone_Prefixes ] OF ShortStr
+                         = ( '', '', '', '', '' );
+
+   Default_Prefix      : CHAR      (* Default prefix character    *)
+                         = ' ';
+   Default_Postfix     : CHAR      (* Default postfix character   *)
+                         = ' ';
+   Phone_Number        : String30  (* Phone number to dial        *)
+                         = '';
+   Prefix_Str          : ShortStr  (* Phone number prefix         *)
+                         = '';
+   Postfix_Str         : ShortStr  (* Phone number postfix        *)
+                         = '';
+
+   N_Dial_Nos          : INTEGER   (* # of dial list entries      *)
+                         = 0;
+
+   I_Dial_Nos          : INTEGER   (* Current dial list entry     *)
+                         = 0;
+
+                                   (* Dialing list entries        *)
+VAR
+   Dial_Nos            : ARRAY[1..Max_Dial_Nos] OF Dialing_List_Record;
+
+(* VAR *) CONST
+                                   (* Dialing directory size *)
+   Dialing_Dir_Size    : INTEGER
+                         = 200;
+
+   Dialing_Dir_Size_Max: INTEGER
+                         = 200;
+                                   (* Phone directory *)
+
+   Dialing_Directory   : Dialing_Directory_Ptr = NIL;
+
+   Use_Short_Dial_Menu : BOOLEAN   (* TRUE to use 1-line dial prompt *)
+                         = FALSE;
+
+   Any_Dialing_Changes : BOOLEAN   (* TRUE if any dialing entries changed *)
+                         = FALSE;
+
+   Script_Dialed       : BOOLEAN   (* TRUE if doing linked script       *)
+                         = FALSE;
+
+(*----------------------------------------------------------------------*)
+(*                     Global variables for modem                       *)
+(*----------------------------------------------------------------------*)
+
+(* VAR *) CONST
+   Modem_Init          : AnyStr    (* Modem initialization string *)
+                         = 'ATZ|~ATX1|';
+   Modem_Dial          : ShortStr  (* Modem dialing command       *)
+                         = 'ATDT';
+   Modem_Dial_End      : ShortStr  (* Modem end for dial command  *)
+                         = '|';
+   Modem_Busy          : ShortStr  (* Modem return if line busy   *)
+                         = 'BUSY';
+   Modem_Connect       : ShortStr  (* Modem connect message       *)
+                         = 'CONNECT';
+   Modem_No_Carrier    : ShortStr  (* Modem no carrier message    *)
+                         = 'NO CARRIER';
+   Modem_Escape        : ShortStr  (* Modem escape command        *)
+                         = '+++';
+   Modem_Escape_Time   : INTEGER   (* Time in mil. for escape     *)
+                         = 1500;
+   Modem_Hang_Up       : ShortStr  (* Modem hangup command        *)
+                         = 'ATH0|';
+   Modem_Time_Out      : LONGINT   (* Modem time out value        *)
+                         = 60;
+   Modem_Redial_Delay  : LONGINT   (* Modem redial delay          *)
+                         = 45;
+   Modem_Answer        : ShortStr  (* Modem answer phone          *)
+                         = 'ATA|';
+   Modem_Host_Set      : AnyStr    (* Modem host mode setup       *)
+                         = 'ATZ|~ATX1|~ATS0=1|';
+   Modem_Host_UnSet    : AnyStr    (* Modem host mode endup       *)
+                         = 'ATZ|~ATX1|~ATS0=0|';
+   Modem_Command_Delay : INTEGER   (* Ms between command chars    *)
+                         = 10;
+   Modem_Carrier_High  : BOOLEAN   (* TRUE if carrier line high   *)
+                         = FALSE;
+   Modem_Ring          : ShortStr  (* Modem ring detect message   *)
+                         = 'RING';
+   Host_Auto_Baud      : BOOLEAN   (* Attempt auto speed detect   *)
+                         = TRUE;
+   Modem_Hold_Line     : BOOLEAN   (* Hold line after failed dial *)
+                         = FALSE;
+
+(*----------------------------------------------------------------------*)
+(*                     Useful character sets                            *)
+(*----------------------------------------------------------------------*)
+
+   Digits      : SET OF '0'..'9' = ['0'..'9'];
+   Lets        : SET OF 'A'..'Z' = [ 'A'..'G','L'..'P' ];
+
